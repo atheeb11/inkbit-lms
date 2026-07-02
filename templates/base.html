@@ -295,10 +295,12 @@
                             <a href="/api/toggle-language" class="theme-toggle" title="Switch Language" style="padding: 0.35rem; width: 28px; height: 28px; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: var(--text-primary);">
                                 {{ current_lang | upper }}
                             </a>
-                            <!-- Theme Toggle -->
-                            <button class="theme-toggle" aria-label="Toggle light/dark theme" style="padding: 0.35rem; width: 28px; height: 28px;">
-                                <svg class="feather" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg>
-                            </button>
+                            <!-- Theme Options -->
+                            <div class="sidebar-theme-selector" style="display: flex; gap: 0.35rem; align-items: center; background: rgba(255,255,255,0.05); padding: 0.2rem 0.4rem; border-radius: 20px; border: 1px solid var(--border-color); margin-right: 0.25rem;">
+                                <button onclick="quickSetTheme('dark-glass')" title="Space Blue" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #0ea5e9; cursor: pointer; padding: 0; outline: none; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.25)'" onmouseout="this.style.transform='scale(1)'"></button>
+                                <button onclick="quickSetTheme('theme-cyberpunk')" title="Cyber Pink" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #d946ef; cursor: pointer; padding: 0; outline: none; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.25)'" onmouseout="this.style.transform='scale(1)'"></button>
+                                <button onclick="quickSetTheme('theme-emerald')" title="Emerald Forest" style="width: 12px; height: 12px; border-radius: 50%; border: none; background: #10b981; cursor: pointer; padding: 0; outline: none; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.25)'" onmouseout="this.style.transform='scale(1)'"></button>
+                            </div>
                             <!-- Change Password Toggle -->
                             <button class="theme-toggle" onclick="openModal('change-password-modal')" title="Change Password" style="padding: 0.35rem; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--text-primary);">
                                 <svg class="feather" viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
@@ -765,6 +767,30 @@
     </div>
 
     <script>
+        function quickSetTheme(themeName) {
+            const htmlElement = document.documentElement;
+            htmlElement.className = '';
+            if (themeName !== 'dark-glass') {
+                htmlElement.classList.add(themeName);
+            }
+            
+            // Save theme to user settings via API
+            fetch('/api/settings/theme', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: themeName })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error("Failed to persist theme settings.");
+                }
+            })
+            .catch(err => {
+                console.error("Error setting theme preset:", err);
+            });
+        }
+
         const toggleBtn = document.getElementById('ai-chat-toggle');
         const chatPanel = document.getElementById('ai-chat-panel');
         const closeBtn = document.getElementById('ai-chat-close');

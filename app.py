@@ -1207,6 +1207,18 @@ def settings():
     return render_template('settings.html', active_page='settings')
 
 
+@app.route('/api/settings/theme', methods=['POST'])
+@login_required
+def update_theme():
+    data = request.get_json() or {}
+    theme = data.get('theme')
+    if theme in ['dark-glass', 'theme-cyberpunk', 'theme-emerald']:
+        current_user.preferred_theme = theme
+        db.session.commit()
+        return {"success": True, "theme": theme}
+    return {"success": False, "error": "Invalid theme"}, 400
+
+
 @app.route('/api/telegram/discover-chat-id')
 @login_required
 def discover_chat_id():
