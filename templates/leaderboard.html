@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _t('leaderboard') }} - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem; max-width: 900px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 2.5rem;">
+        <h1 class="text-gradient" style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">🏆 {{ _t('leaderboard') }}</h1>
+        <p style="color: var(--text-secondary); font-size: 1rem;">See the top performers and their academic milestones!</p>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div class="glass-card" style="padding: 1.5rem; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
+                    <th style="padding: 1rem; width: 80px;">Rank</th>
+                    <th style="padding: 1rem;">Student</th>
+                    <th style="padding: 1rem; text-align: right; width: 120px;">XP Points</th>
+                    <th style="padding: 1rem; text-align: center; width: 250px;">Badges</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in top_students %}
+                <tr style="border-bottom: 1px solid var(--border-color); font-size: 0.95rem; {% if student.id == current_user.id %}background: rgba(37, 99, 235, 0.08);{% endif %}">
+                    <td style="padding: 1.25rem 1rem; font-weight: 700;">
+                        {% if loop.index == 1 %}
+                            🥇 1st
+                        {% elif loop.index == 2 %}
+                            🥈 2nd
+                        {% elif loop.index == 3 %}
+                            🥉 3rd
+                        {% else %}
+                            #{{ loop.index }}
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1.25rem 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            {% if student.profile_photo %}
+                                <img src="{{ url_for('download_file', filename=student.profile_photo) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                {{ student.name[0] | upper }}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span style="font-weight: 600; color: var(--text-primary);">{{ student.name }}</span>
+                            {% if student.id == current_user.id %}
+                                <span class="badge" style="background: var(--primary); font-size: 0.65rem; margin-left: 0.5rem;">You</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td style="padding: 1.25rem 1rem; text-align: right; font-weight: 700; color: var(--primary);">
+                        {{ student.xp_points }} XP
+                    </td>
+                    <td style="padding: 1.25rem 1rem; text-align: center;">
+                        <div style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                            {% for badge in student.badges %}
+                                <span title="{{ badge.name }}: {{ badge.description }}" style="font-size: 1.2rem; cursor: help;">
+                                    {{ badge.icon_code }}
+                                </span>
+                            {% else %}
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">None</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">No student rankings found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

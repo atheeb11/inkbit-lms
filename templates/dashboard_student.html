@@ -1,0 +1,490 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div class="app-main">
+    
+    <!-- CENTER PANEL: MAIN CONTENT -->
+    <div class="center-panel">
+        
+        <!-- Welcome Header Banner -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1 style="margin: 0; font-size: 1.8rem; font-weight: 800; font-family: var(--font-heading);">
+                    Welcome back, {{ current_user.name.split(' ')[0] }}! 👋
+                </h1>
+                <p style="margin: 0.25rem 0 0 0; color: var(--text-secondary); font-size: 0.9rem;">
+                    Let's continue your learning journey today.
+                </p>
+            </div>
+            
+            <!-- Search bar -->
+            <div class="search-wrapper" style="width: 320px; position: relative;">
+                <svg class="feather search-icon-svg" viewBox="0 0 24 24" style="width: 16px; height: 16px; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); stroke: var(--text-muted); fill: none; stroke-width: 2;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="course-search-input" class="form-control" placeholder="Search for courses, assignments..." style="padding-left: 2.5rem; font-size: 0.85rem; border-radius: 50px; background: var(--bg-card); border-color: var(--border-color);">
+            </div>
+        </div>
+
+        <!-- 4 Row Statistics Cards (exactly like student mockup) -->
+        <div class="stats-row-custom">
+            <!-- Stat 1: Enrolled Courses -->
+            <div class="glass-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(37, 99, 235, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Enrolled Courses</span>
+                    <h3 style="margin: 0.15rem 0; font-size: 1.5rem; font-weight: 700; font-family: var(--font-heading);">{{ enrollments | length }}</h3>
+                    <span style="font-size: 0.65rem; color: var(--success); font-weight: 600;">2 new this month</span>
+                </div>
+            </div>
+
+            <!-- Stat 2: Assignments Due -->
+            <div class="glass-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.1); color: var(--warning); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Assignments Due</span>
+                    <h3 style="margin: 0.15rem 0; font-size: 1.5rem; font-weight: 700; font-family: var(--font-heading);">{{ deadlines | length }}</h3>
+                    <span style="font-size: 0.65rem; color: var(--danger); font-weight: 600;">2 due in next 7 days</span>
+                </div>
+            </div>
+
+            <!-- Stat 3: Quizzes Completed -->
+            <div class="glass-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); color: var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Quizzes Completed</span>
+                    <h3 style="margin: 0.15rem 0; font-size: 1.5rem; font-weight: 700; font-family: var(--font-heading);">{{ quizzes_completed }}</h3>
+                    <span style="font-size: 0.65rem; color: var(--success); font-weight: 600;">88% average score</span>
+                </div>
+            </div>
+
+            <!-- Stat 4: Learning Progress -->
+            <div class="glass-card" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(124, 58, 237, 0.1); color: #8b5cf6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;">Learning Progress</span>
+                    <h3 style="margin: 0.15rem 0; font-size: 1.5rem; font-weight: 700; font-family: var(--font-heading);">{{ '%.0f' % (average_grade or 75) }}%</h3>
+                    <span style="font-size: 0.65rem; color: var(--primary); font-weight: 600;">Keep it up! 🚀</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row: Chart.js Visualizations (Study Progress & Academic Analysis) -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-bottom: 2.5rem;" class="analytics-row-custom">
+            
+            <!-- Study Progress Line Chart -->
+            <div class="glass-card" style="padding: 1.5rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; font-family: var(--font-heading); display: flex; justify-content: space-between; align-items: center; margin-top: 0;">
+                    <span>Weekly Study Progress</span>
+                    <span style="font-size: 0.7rem; color: var(--secondary); background: var(--secondary-glow); padding: 2px 8px; border-radius: 12px; font-weight: 600;">+24% Activity</span>
+                </h3>
+                <div class="chart-container-wrapper" style="height: 180px;">
+                    <canvas id="studentStudyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Academic Analysis Doughnut Chart -->
+            <div class="glass-card" style="padding: 1.5rem;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; font-family: var(--font-heading); margin-top: 0;">
+                    Academic Breakdown
+                </h3>
+                <div class="chart-container-wrapper" style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                    <div style="width: 140px; height: 140px; position: relative;">
+                        <canvas id="studentAcademicChart"></canvas>
+                        <!-- Center text -->
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+                            <span style="font-size: 1.2rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-primary);" id="total-tasks-count">0</span>
+                            <span style="font-size: 0.6rem; color: var(--text-muted); display: block; text-transform: uppercase;">Tasks</span>
+                        </div>
+                    </div>
+                    <!-- Legend detail mapping -->
+                    <div style="margin-left: 1.5rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6;"></div>
+                            <span style="color: var(--text-secondary);">Assignments: {{ deadlines | length }}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6;"></div>
+                            <span style="color: var(--text-secondary);">Quizzes: {{ quizzes_completed }}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></div>
+                            <span style="color: var(--text-secondary);">Live Classes: {{ live_classes | length }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section: My Courses -->
+        <div id="courses-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.15rem; font-weight: 700; font-family: var(--font-heading); margin: 0;">My Courses</h2>
+            <a href="#" onclick="smoothScrollTo('courses-section'); return false;" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All</a>
+        </div>
+
+        <!-- Course Cards Grid -->
+        <div class="course-grid" style="margin-bottom: 2.5rem;" id="student-courses-container">
+            {% if enrollments %}
+                {% for enrollment in enrollments %}
+                    {% set course = enrollment.course %}
+                    {% set progress_val = course_progress.get(course.id, 0) %}
+                    {% set is_paid_course = course.is_paid %}
+                    {% set has_paid = enrollment.payment_status == 'paid' %}
+                    <div class="glass-card course-card-item" style="padding: 1.25rem; display: flex; flex-direction: column; min-height: 190px; position: relative;" data-title="{{ course.name | lower }}">
+                        <!-- Status capsule -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <span style="font-size: 0.65rem; background: rgba(37,99,235,0.15); color: var(--primary); padding: 2px 8px; border-radius: 20px; font-weight: 600;">{{ course.code }}</span>
+                            {% if is_paid_course and not has_paid %}
+                                <span style="font-size: 0.65rem; color: var(--warning); font-weight: 700; background: rgba(245, 158, 11, 0.15); padding: 2px 8px; border-radius: 20px;">
+                                    Unpaid
+                                </span>
+                            {% else %}
+                                <span style="font-size: 0.65rem; color: {% if progress_val == 100 %}var(--success){% else %}var(--secondary){% endif %}; font-weight: 700;">
+                                    {{ 'Completed' if progress_val == 100 else 'In Progress' }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <h3 style="font-size: 1rem; font-weight: 700; line-height: 1.3; margin: 0 0 0.5rem 0; font-family: var(--font-heading); height: 2.6rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                            {{ course.name }}
+                        </h3>
+                        
+                        <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 1rem;">
+                            Prof. {{ course.teacher.name }}
+                        </span>
+
+                        {% if is_paid_course and not has_paid %}
+                            <!-- Buy Button instead of progress -->
+                            <div style="margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.95rem; font-weight: 800; color: var(--secondary); font-family: var(--font-heading);">${{ "%.2f"|format(course.price) }}</span>
+                                <a href="{{ url_for('checkout', course_id=course.id) }}" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 6px; position: relative; z-index: 10; font-weight: 600; text-decoration: none;">
+                                    Buy Course
+                                </a>
+                            </div>
+                        {% else %}
+                            <!-- Horizontal Progress Bar (matching student mockup) -->
+                            <div style="margin-top: auto; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 500;">
+                                    <span>Progress</span>
+                                    <strong>{{ progress_val }}%</strong>
+                                </div>
+                                <div style="height: 6px; background: rgba(255,255,255,0.03); border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color);">
+                                    <div style="width: {{ progress_val }}%; height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);"></div>
+                                </div>
+                            </div>
+
+                            <!-- Overlay link to enter class details -->
+                            <a href="{{ url_for('course_detail', course_id=course.id) }}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; text-indent: -9999px;">Enter Class</a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="glass-card text-center animate-fade-in" style="grid-column: 1 / -1; padding: 4rem 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.25rem; border-color: rgba(37,99,235,0.15);">
+                    <div style="width: 72px; height: 72px; border-radius: 50%; background: rgba(37, 99, 235, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                        📚
+                    </div>
+                    <div>
+                        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 700; font-family: var(--font-heading); color: var(--text-primary);">No Courses Assigned Yet</h3>
+                        <p style="margin: 0; color: var(--text-secondary); max-width: 440px; font-size: 0.9rem; line-height: 1.6;">
+                            You are not currently enrolled in any courses. Please contact your lecturer or institution administrator to add you to a class.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Row: Deadlines and Recent Activities (Side by Side) -->
+        <div class="responsive-grid-1-1" style="margin-bottom: 2rem;">
+            
+            <!-- Upcoming Deadlines -->
+            <div id="deadlines-section" class="glass-card" style="padding: 1.5rem;">
+                <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; font-family: var(--font-heading); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 0;">
+                    <span>Upcoming Deadlines</span>
+                    <a href="#" onclick="smoothScrollTo('deadlines-section'); return false;" style="font-size: 0.7rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All</a>
+                </h3>
+
+                {% if deadlines %}
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+                        {% for deadline in deadlines[:3] %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.02);">
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.85rem; font-weight: 600; line-height: 1.3;">{{ deadline.title }}</h4>
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">{{ deadline.course_code }} • {{ deadline.type }}</span>
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="font-size: 0.7rem; color: var(--danger); font-weight: 600; display: block;">{{ deadline.due_date.strftime('%b %d') }}</span>
+                                    <span style="font-size: 0.65rem; color: var(--text-muted);">{{ deadline.due_date.strftime('%H:%M') }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 2rem 0; color: var(--text-muted); font-size: 0.8rem;">
+                        🎉 No deadlines pending!
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="glass-card" style="padding: 1.5rem;">
+                <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; font-family: var(--font-heading); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 0;">
+                    <span>Recent Activities</span>
+                    <a href="#" onclick="openModal('notifications-modal'); return false;" style="font-size: 0.7rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All</a>
+                </h3>
+
+                <div class="timeline-feed" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- Activity 1 -->
+                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--success); margin-top: 5px; flex-shrink: 0; box-shadow: 0 0 8px var(--success);"></div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.8rem; line-height: 1.4; color: var(--text-primary);">You submitted Python Assignment</p>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">2 hours ago</span>
+                        </div>
+                    </div>
+
+                    <!-- Activity 2 -->
+                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary); margin-top: 5px; flex-shrink: 0; box-shadow: 0 0 8px var(--primary);"></div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.8rem; line-height: 1.4; color: var(--text-primary);">You scored 85% in Quiz #2</p>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">1 day ago</span>
+                        </div>
+                    </div>
+
+                    <!-- Activity 3 -->
+                    <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; margin-top: 5px; flex-shrink: 0; box-shadow: 0 0 8px #8b5cf6;"></div>
+                        <div>
+                            <p style="margin: 0; font-size: 0.8rem; line-height: 1.4; color: var(--text-primary);">New course syllabus uploaded: Discrete Mathematics</p>
+                            <span style="font-size: 0.65rem; color: var(--text-muted);">2 days ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT WIDGET PANEL: SIDEBAR INFO -->
+    <div class="right-widget-panel">
+        
+        <!-- Welcome Bio card & Linked Social Badges (Requested detail) -->
+        <div class="glass-card" style="padding: 1.25rem; margin-bottom: 1.5rem; text-align: center;">
+            <div class="user-avatar" style="width: 60px; height: 60px; font-size: 1.5rem; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color); margin: 0 auto 0.75rem auto;">
+                {% if current_user.profile_photo %}
+                    <img src="{{ url_for('download_file', filename=current_user.profile_photo) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    {{ current_user.name[0] | upper if current_user.name else 'U' }}
+                {% endif %}
+            </div>
+            
+            <h4 style="margin: 0 0 0.25rem 0; font-size: 0.95rem; font-weight: 700; font-family: var(--font-heading);">{{ current_user.name }}</h4>
+            <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.4; font-style: italic;">
+                "{{ current_user.profile_bio or 'Dedicated Student' }}"
+            </p>
+
+            <!-- Linked Social Badges inside welcoming banner/bio -->
+            <div style="display: flex; gap: 0.35rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                {% if current_user.social_whatsapp %}
+                    <a href="https://wa.me/{{ current_user.social_whatsapp.replace('+', '').replace(' ', '') }}" target="_blank" style="text-decoration: none; color: #10b981; font-size: 0.8rem; width: 26px; height: 26px; border-radius: 50%; background: rgba(16,185,129,0.1); display: flex; align-items: center; justify-content: center;" title="WhatsApp">💬</a>
+                {% endif %}
+                {% if current_user.social_instagram %}
+                    <a href="https://instagram.com/{{ current_user.social_instagram }}" target="_blank" style="text-decoration: none; color: #f59e0b; font-size: 0.8rem; width: 26px; height: 26px; border-radius: 50%; background: rgba(245,158,11,0.1); display: flex; align-items: center; justify-content: center;" title="Instagram">📸</a>
+                {% endif %}
+                {% if current_user.social_telegram %}
+                    <a href="https://t.me/{{ current_user.social_telegram }}" target="_blank" style="text-decoration: none; color: #3b82f6; font-size: 0.8rem; width: 26px; height: 26px; border-radius: 50%; background: rgba(59,130,246,0.1); display: flex; align-items: center; justify-content: center;" title="Telegram">✈️</a>
+                {% endif %}
+                {% if current_user.social_linkedin %}
+                    {% set link = current_user.social_linkedin if 'linkedin.com' in current_user.social_linkedin else 'https://linkedin.com/in/' ~ current_user.social_linkedin %}
+                    <a href="{{ link }}" target="_blank" style="text-decoration: none; color: #2563eb; font-size: 0.8rem; width: 26px; height: 26px; border-radius: 50%; background: rgba(37,99,235,0.1); display: flex; align-items: center; justify-content: center;" title="LinkedIn">💼</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Gamification & Badges Card -->
+        <div class="glass-card" style="padding: 1.25rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
+            <h3 style="font-size: 0.95rem; margin-bottom: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 0;">
+                <span>Achievements</span>
+                <span style="font-size: 0.7rem; color: var(--secondary); font-weight: 600;">Level {{ (current_user.xp_points // 100) + 1 }}</span>
+            </h3>
+            <div style="text-align: center; margin-bottom: 1rem;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading);">
+                    {{ current_user.xp_points }} <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">XP Points</span>
+                </div>
+                <!-- XP progress bar to next level -->
+                {% set next_level_xp = ((current_user.xp_points // 100) + 1) * 100 %}
+                {% set current_level_xp = (current_user.xp_points // 100) * 100 %}
+                {% set progress_xp = current_user.xp_points - current_level_xp %}
+                <div style="height: 6px; background: rgba(255,255,255,0.03); border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color); margin-top: 0.5rem; position: relative;" title="{{ progress_xp }}/100 XP to Level {{ (current_user.xp_points // 100) + 2 }}">
+                    <div style="width: {{ progress_xp }}%; height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--secondary) 0%, var(--primary) 100%);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    <span>Lvl {{ (current_user.xp_points // 100) + 1 }}</span>
+                    <span>{{ 100 - progress_xp }} XP to next level</span>
+                    <span>Lvl {{ (current_user.xp_points // 100) + 2 }}</span>
+                </div>
+            </div>
+            
+            <!-- Badges Gallery -->
+            <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; display: block; margin-bottom: 0.5rem;">Earned Badges ({{ current_user.badges.all() | length }})</span>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+                    {% set list_badges = current_user.badges.all() %}
+                    {% if list_badges %}
+                        {% for badge in list_badges %}
+                            <div style="display: flex; flex-direction: column; align-items: center; width: 55px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.4rem 0.25rem;" title="{{ badge.name }}: {{ badge.description }}">
+                                <span style="font-size: 1.25rem; margin-bottom: 0.15rem;">{{ badge.icon_code }}</span>
+                                <span style="font-size: 0.65rem; text-align: center; color: var(--text-primary); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; width: 100%;">{{ badge.name }}</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="font-size: 0.7rem; color: var(--text-muted); text-align: center; margin: 0.5rem 0;">No badges unlocked yet. Keep studying!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Schedule Calendar widget -->
+        <div class="sidebar-card" style="padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 1.5rem;">
+            <div id="dynamic-calendar"></div>
+        </div>
+
+        <!-- Upcoming Schedule Widget (exactly like student mockup) -->
+        <div id="classes-section" class="sidebar-card" style="padding: 1.25rem; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px;">
+            <h3 style="font-size: 0.95rem; margin-bottom: 1rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 0;">
+                <span>Today's Classes</span>
+            </h3>
+
+            <div class="classes-join-list">
+                {% if live_classes %}
+                    {% for live in live_classes %}
+                        <div class="schedule-join-card">
+                            <div class="schedule-join-info">
+                                <span class="schedule-join-title">{{ live.course.name }}</span>
+                                <span class="schedule-join-time">{{ live.title }} • {{ live.scheduled_time.strftime('%b %d, %H:%M') }}</span>
+                            </div>
+                            <a href="{{ live.meeting_link }}" target="_blank" class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.65rem; border-radius: 6px; text-decoration: none; text-align: center; display: inline-block;">Join</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin: 1rem 0;">No classes scheduled today.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Weekly Study Progress Line Chart
+    const ctxStudy = document.getElementById('studentStudyChart');
+    if (ctxStudy) {
+        new Chart(ctxStudy.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'XP Gained',
+                    data: [35, 65, 45, 95, 75, 120, 160],
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#06b6d4',
+                    pointBorderColor: 'rgba(255,255,255,0.8)',
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false, color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: 'hsl(222, 10%, 60%)', font: { size: 10 } }
+                    },
+                    y: {
+                        min: 0,
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        ticks: { color: 'hsl(222, 10%, 60%)', font: { size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Academic Breakdown Doughnut Chart
+    const ctxAcademic = document.getElementById('studentAcademicChart');
+    if (ctxAcademic) {
+        const assignmentsCount = {{ deadlines | length }};
+        const quizzesCount = {{ quizzes_completed }};
+        const liveClassesCount = {{ live_classes | length }};
+        const totalCount = assignmentsCount + quizzesCount + liveClassesCount;
+        
+        document.getElementById('total-tasks-count').innerText = totalCount;
+
+        const hasData = totalCount > 0;
+        const chartData = hasData ? [assignmentsCount, quizzesCount, liveClassesCount] : [1, 1, 1];
+        const chartColors = hasData ? ['#8b5cf6', '#3b82f6', '#10b981'] : ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.05)'];
+
+        new Chart(ctxAcademic.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Assignments', 'Quizzes', 'Live Classes'],
+                datasets: [{
+                    data: chartData,
+                    backgroundColor: chartColors,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '72%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Client-Side Course Search
+    const searchInput = document.getElementById('course-search-input');
+    const courseCards = document.querySelectorAll('.course-card-item');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            courseCards.forEach(card => {
+                const title = card.getAttribute('data-title');
+                if (title.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

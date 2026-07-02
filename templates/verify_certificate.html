@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Verification - INKBIT LMS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0d1224 0%, #1e2640 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            font-family: var(--font-body);
+            color: var(--text-primary);
+        }
+        .verify-card {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border-color: var(--border-color-hover);
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.35rem 1rem;
+            border-radius: 50px;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .status-verified {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+        .status-failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+        .field-group {
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.85rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+        }
+        .field-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .field-value {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-card verify-card" style="padding: 2.5rem 2rem; box-shadow: var(--glass-shadow);">
+        
+        <!-- Logo -->
+        <div style="margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" style="height: 38px;">
+            <span style="font-size: 1.25rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-primary); letter-spacing: 1.5px;">INKBIT VERIFY</span>
+        </div>
+
+        {% if cert %}
+            <!-- Verification Status -->
+            <div class="status-badge status-verified">
+                ✓ Authentic Certificate
+            </div>
+            
+            <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1.5rem; font-family: var(--font-heading);">
+                Certificate of Completion
+            </h2>
+            
+            <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.75rem;">
+                This document serves as official verification that the individual below has successfully met all learning requirements and passed all syllabus criteria in the classroom.
+            </p>
+
+            <!-- Certificate Details -->
+            <div style="text-align: left; margin-bottom: 2rem; background: rgba(0,0,0,0.1); border-radius: 8px; padding: 0.5rem 1rem;">
+                <div class="field-group">
+                    <span class="field-label">Student Name</span>
+                    <span class="field-value">{{ cert.student.name }}</span>
+                </div>
+                <div class="field-group">
+                    <span class="field-label">Course Title</span>
+                    <span class="field-value">{{ cert.course.name }}</span>
+                </div>
+                <div class="field-group">
+                    <span class="field-label">Course Code</span>
+                    <span class="field-value">{{ cert.course.code }}</span>
+                </div>
+                <div class="field-group">
+                    <span class="field-label">Verification Code</span>
+                    <span class="field-value" style="font-family: monospace; color: var(--secondary);">{{ cert.certificate_code }}</span>
+                </div>
+                <div class="field-group" style="border: none;">
+                    <span class="field-label">Issued Date</span>
+                    <span class="field-value">{{ cert.issued_at.strftime('%B %d, %Y') }}</span>
+                </div>
+            </div>
+
+            <!-- Verification Stamp -->
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+                <div style="text-align: left;">
+                    <span style="font-size: 0.65rem; color: var(--text-muted); display: block; text-transform: uppercase;">Verified Authority</span>
+                    <strong style="font-size: 0.8rem; color: var(--text-secondary);">INKBIT Academic Council</strong>
+                </div>
+                <!-- Dynamic self-referential QR Code for scanning -->
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data={{ request.url | urlencode }}&color=06b6d4&bgcolor=0d1224" alt="QR Verify" style="width: 60px; height: 60px; border-radius: 6px; border: 1px solid var(--border-color);">
+            </div>
+            
+        {% else %}
+            <!-- Verification Failed -->
+            <div class="status-badge status-failed">
+                ✕ Verification Failed
+            </div>
+            
+            <h2 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem; color: var(--danger); font-family: var(--font-heading);">
+                Invalid Credentials
+            </h2>
+            
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1.5rem;">
+                The certificate verification code <strong>{{ code }}</strong> is not registered or has been revoked. Please check the credential code and try again.
+            </p>
+            
+            <a href="/" class="btn btn-secondary" style="padding: 0.5rem 1.5rem; text-decoration: none; font-size: 0.8rem; font-weight: 700; border-radius: 6px; display: inline-block;">
+                Back to Dashboard
+            </a>
+        {% endif %}
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en" class="{% if current_user.is_authenticated and current_user.preferred_theme %}{{ current_user.preferred_theme }}{% endif %}" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}INKBIT LMS - Learn. Grow. Succeed.{% endblock %}</title>
+    
+    <!-- Title Tag and Meta Description for SEO -->
+    <meta name="description" content="INKBIT Learning Management System - Empowering students and teachers with interactive quizzes, course material uploads, assignment trackers, and dynamic progress metrics.">
+    
+    <link rel="manifest" href="/static/manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/js/sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+            });
+        }
+    </script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/logo.png') }}">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+        <!-- Mobile Header Bar for viewports < 768px -->
+        <div class="mobile-header-bar">
+            <button class="mobile-menu-toggle" id="mobile-menu-toggle-btn" aria-label="Toggle Navigation">
+                <svg class="feather" style="width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            <a href="/" class="mobile-header-logo" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="INKBIT Logo" style="height: 28px;">
+                <span class="logo-text" style="font-size: 1.1rem; font-weight: 800; font-family: var(--font-heading); color: var(--text-primary); letter-spacing: 1px;">INKBIT</span>
+            </a>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <button class="theme-toggle" aria-label="Toggle light/dark theme" style="background: none; border: none; padding: 0.35rem; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><circle cx="12" cy="12" r="5"></circle></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Overlay (dark background on mobile when drawer is active) -->
+        <div class="sidebar-overlay" id="sidebar-overlay-layer"></div>
+
+        <!-- AUTHENTICATED USER: ADVANCED SIDEBAR LAYOUT SCROLL SCAFFOLD -->
+        <div class="app-layout">
+            <!-- LEFT SIDEBAR NAVIGATION -->
+            <aside class="app-sidebar">
+                <a href="/" class="sidebar-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="INKBIT Logo" style="height: 38px;">
+                    <span class="logo-text">INKBIT</span>
+                </a>
+                
+                <ul class="sidebar-menu" style="flex: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.25rem;">
+                    {% if current_user.role == 'student' %}
+                    <!-- Student Sidebar Menu -->
+                    <li class="sidebar-menu-item {% if active_page == 'dashboard' or not active_page %}active{% endif %}">
+                        <a href="/">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                            {{ _t('dashboard') }}
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if active_page == 'self-learning' %}active{% endif %}">
+                        <a href="/self-learning">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            {{ _t('self_learning') }}
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if active_page == 'leaderboard' %}active{% endif %}">
+                        <a href="/leaderboard">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                            {{ _t('leaderboard') }}
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            My Courses
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Assignments
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Quizzes
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                            Live Classes
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Calendar
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="#" class="sidebar-link" style="flex: 1; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Messages
+                        </a>
+                        <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; margin-right: 0.75rem;">3</span>
+                    </li>
+                    <li class="sidebar-menu-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="#" class="sidebar-link" style="flex: 1; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            Notifications
+                        </a>
+                        <span class="badge" style="background: var(--secondary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; margin-right: 0.75rem;">5</span>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            Grades
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Resources
+                        </a>
+                    </li>
+                    {% elif current_user.role == 'teacher' %}
+                    <!-- Teacher Sidebar Menu -->
+                    <li class="sidebar-menu-item {% if active_page == 'dashboard' or not active_page %}active{% endif %}">
+                        <a href="/">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            My Courses
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Students
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Assignments
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            Quizzes
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                            Live Classes
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            Grades
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><polygon points="12 11 12 17 17 14"></polygon></svg>
+                            Attendance
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Calendar
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="#" class="sidebar-link" style="flex: 1; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            Messages
+                        </a>
+                        <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; margin-right: 0.75rem;">3</span>
+                    </li>
+                    <li class="sidebar-menu-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="#" class="sidebar-link" style="flex: 1; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            Notifications
+                        </a>
+                        <span class="badge" style="background: var(--secondary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; margin-right: 0.75rem;">6</span>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                            Resources
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            Reports
+                        </a>
+                    </li>
+                    {% else %}
+                    <!-- Institution Sidebar Menu -->
+                    <li class="sidebar-menu-item {% if active_page == 'dashboard' or not active_page %}active{% endif %}">
+                        <a href="/">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Tutors Registry
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            Students Registry
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                            Active Courses
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="#" class="sidebar-link">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            Analytics
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                        <a href="#" class="sidebar-link" style="flex: 1; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            Financials
+                        </a>
+                        <span class="badge" style="background: var(--success); color: white; padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; margin-right: 0.75rem;">2</span>
+                    </li>
+                    {% endif %}
+                    
+                    <li class="sidebar-menu-item {% if active_page == 'settings' %}active{% endif %}">
+                        <a href="{{ url_for('settings') }}">
+                            <svg class="feather" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Sidebar Promo Card (Upgrade to Pro/Premium) -->
+                {% if current_user.role == 'student' %}
+                <div class="sidebar-promo-card">
+                    <span style="font-weight: 700; font-size: 0.8rem; display: block; margin-bottom: 0.25rem; color: #fff;">👑 Upgrade to Premium</span>
+                    <p style="font-size: 0.65rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.3;">Unlock premium courses and exclusive features.</p>
+                    <button class="btn btn-primary" style="width: 100%; padding: 0.4rem 0.5rem; font-size: 0.7rem; border-radius: 8px;" onclick="openModal('financials-modal');">Upgrade Now</button>
+                </div>
+                {% elif current_user.role == 'teacher' %}
+                <div class="sidebar-promo-card">
+                    <span style="font-weight: 700; font-size: 0.8rem; display: block; margin-bottom: 0.25rem; color: #fff;">⭐ Upgrade to Pro</span>
+                    <p style="font-size: 0.65rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.3;">Unlock advanced features and grow your teaching experience.</p>
+                    <button class="btn btn-primary" style="width: 100%; padding: 0.4rem 0.5rem; font-size: 0.7rem; border-radius: 8px;" onclick="openModal('financials-modal');">Upgrade Now</button>
+                </div>
+                {% endif %}
+
+                <div class="sidebar-user-footer">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.8rem; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                {% if current_user.profile_photo %}
+                                    <img src="{{ url_for('download_file', filename=current_user.profile_photo) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    {{ current_user.name[0] | upper if current_user.name else 'U' }}
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; flex-direction: column; overflow: hidden; max-width: 110px;">
+                                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ current_user.name }}</span>
+                                <span style="font-size: 0.65rem; color: var(--text-muted);">{% if current_user.role == 'student' %}Student{% elif current_user.role == 'teacher' %}Tutor{% else %}Institution{% endif %}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.25rem; align-items: center;">
+                            <!-- Language Toggle -->
+                            <a href="/api/toggle-language" class="theme-toggle" title="Switch Language" style="padding: 0.35rem; width: 28px; height: 28px; text-decoration: none; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; color: var(--text-primary);">
+                                {{ current_lang | upper }}
+                            </a>
+                            <!-- Theme Toggle -->
+                            <button class="theme-toggle" aria-label="Toggle light/dark theme" style="padding: 0.35rem; width: 28px; height: 28px;">
+                                <svg class="feather" style="width: 14px; height: 14px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg>
+                            </button>
+                            <!-- Change Password Toggle -->
+                            <button class="theme-toggle" onclick="openModal('change-password-modal')" title="Change Password" style="padding: 0.35rem; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: none; border: none; cursor: pointer; color: var(--text-primary);">
+                                <svg class="feather" viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% if current_user.role == 'student' %}
+                    <div style="margin-bottom: 0.75rem; padding: 0.5rem; background: rgba(255, 255, 255, 0.03); border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.7rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span>⭐ <strong>{{ current_user.xp_points }}</strong> XP</span>
+                        <span style="color: var(--primary); font-weight: 600;">Level {{ (current_user.xp_points // 500) + 1 }}</span>
+                    </div>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="width: 100%; padding: 0.5rem; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <svg class="feather" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2;" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        Sign Out
+                    </a>
+                </div>
+            </aside>
+            
+            <!-- MAIN PAGE CONTENT AREA -->
+            <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+                <!-- Flash Alerts -->
+                <div class="flash-messages" style="padding: 1.5rem 2rem 0 2rem;">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                                    {% if category == 'success' %}
+                                        <svg class="feather" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    {% else %}
+                                        <svg class="feather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                    {% endif %}
+                                    <span>{{ message }}</span>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+                
+                <!-- Content Render block container -->
+                <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+    {% elif request.endpoint in ['login', 'register', 'google_login', 'microsoft_login', 'google_callback', 'microsoft_callback'] %}
+        <!-- FULL SCREEN AUTH PAGES -->
+        <div class="auth-full-page-scaffold" style="width: 100vw; min-height: 100vh; display: flex; flex-direction: column;">
+            <!-- Flash Alerts -->
+            <div class="flash-messages" style="position: absolute; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 500px; pointer-events: none;">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }}" style="pointer-events: auto;">
+                                {% if category == 'success' %}
+                                    <svg class="feather" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                {% else %}
+                                    <svg class="feather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                {% endif %}
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+    {% else %}
+        <!-- GUEST USER: STANDARD HEADER NAVIGATION -->
+        <header>
+            <div class="nav-container">
+                <a href="/" class="logo-link">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="INKBIT Logo" class="logo-img">
+                    <span class="logo-text">INKBIT</span>
+                </a>
+                
+                <ul class="nav-menu">
+                    <li><a href="#" class="nav-link" onclick="openModal('support-modal'); return false;">Support Contact</a></li>
+                </ul>
+
+                <div class="nav-actions">
+                    <button class="theme-toggle" aria-label="Toggle light/dark theme">
+                        <svg class="feather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle></svg>
+                    </button>
+                    <a href="{{ url_for('login') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Login</a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash Alerts -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+                            {% if category == 'success' %}
+                                <svg class="feather" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            {% else %}
+                                <svg class="feather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            {% endif %}
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <main class="main-content">
+    {% endif %}
+
+            <!-- SINGLE BLOCK CONTENT PLACEHOLDER -->
+            {% block content %}{% endblock %}
+
+    {% if current_user.is_authenticated %}
+                </div>
+            </div>
+        </div>
+    {% elif request.endpoint in ['login', 'register', 'google_login', 'microsoft_login', 'google_callback', 'microsoft_callback'] %}
+        </div>
+    {% else %}
+        </main>
+
+        <footer>
+            <div style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+                <p>&copy; 2026 INKBIT LMS. All rights reserved.</p>
+                <p style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">LEARN. GROW. SUCCEED.</p>
+            </div>
+        </footer>
+    {% endif %}
+
+    <!-- Global Support / Contact Telegram Modal -->
+    <div class="modal-overlay" id="support-modal">
+        <div class="glass-card modal-container" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3>Contact Support</h3>
+                <button class="btn-icon" onclick="closeModal('support-modal')">
+                    <svg class="feather" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form action="{{ url_for('contact') }}" method="POST">
+                <div class="form-group">
+                    <label for="contact-name" class="form-label">Full Name</label>
+                    <input type="text" id="contact-name" name="name" class="form-control" placeholder="Alex Mercer" value="{{ current_user.name if current_user.is_authenticated else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-email" class="form-label">Email Address</label>
+                    <input type="email" id="contact-email" name="email" class="form-control" placeholder="alex@domain.com" value="{{ current_user.email if current_user.is_authenticated else '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-subject" class="form-label">Subject</label>
+                    <input type="text" id="contact-subject" name="subject" class="form-control" placeholder="e.g. Question about CS101 syllabus" required>
+                </div>
+                <div class="form-group">
+                    <label for="contact-message" class="form-label">Message</label>
+                    <textarea id="contact-message" name="message" class="form-control" placeholder="Describe your issue or request here..." rows="4" required></textarea>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                    💡 <strong>Note:</strong> Messages are sent directly to the administrator's Telegram bot interface.
+                </div>
+                <div class="modal-footer" style="margin-top: 0; padding-top: 0;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('support-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Calendar Timetable Modal -->
+    <div class="modal-overlay" id="timetable-modal">
+        <div class="glass-card modal-container" style="max-width: 500px; width: 90%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <div>
+                    <h3 id="timetable-modal-title" style="margin: 0; font-size: 1.1rem; font-weight: 700; font-family: var(--font-heading);">Daily Timetable</h3>
+                    <p id="timetable-modal-date" style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;"></p>
+                </div>
+                <button class="btn-icon" onclick="closeModal('timetable-modal')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding-right: 0.25rem;">
+                <!-- Live Classes Section -->
+                <div id="timetable-classes-section" style="margin-bottom: 1.5rem;">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--secondary); letter-spacing: 0.05em; margin-bottom: 0.75rem; font-weight: 700;">🎥 Live Classes</h4>
+                    <div id="timetable-classes-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- JS generated list -->
+                    </div>
+                </div>
+
+                <!-- Deadlines Section -->
+                <div id="timetable-deadlines-section">
+                    <h4 style="font-size: 0.85rem; text-transform: uppercase; color: var(--warning); letter-spacing: 0.05em; margin-bottom: 0.75rem; font-weight: 700;">⏳ Deadlines & Tasks</h4>
+                    <div id="timetable-deadlines-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <!-- JS generated list -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="timetable-empty-state" style="text-align: center; padding: 2rem 1rem; color: var(--text-muted); display: none;">
+                    <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🎉</div>
+                    <h5 style="margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">All Clear!</h5>
+                    <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; line-height: 1.4;">No classes or deadlines scheduled for this day.</p>
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('timetable-modal')" style="border-radius: 8px; font-weight: 600; padding: 0.5rem 1.25rem; font-size: 0.85rem;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notifications-modal">
+        <div class="glass-card modal-container" style="max-width: 480px; width: 90%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <h3>System Notifications</h3>
+                <button class="btn-icon" onclick="closeModal('notifications-modal')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="background: rgba(34, 211, 238, 0.08); border: 1px solid rgba(34, 211, 238, 0.15); border-radius: 12px; padding: 0.75rem 1rem; display: flex; gap: 0.75rem; align-items: flex-start; text-align: left;">
+                    <div style="font-size: 1.25rem;">📅</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Live Lecture Scheduled</h4>
+                        <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Python Programming webinar is starting today at 2:24 PM.</p>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">15 minutes ago</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; gap: 0.75rem; align-items: flex-start; text-align: left;">
+                    <div style="font-size: 1.25rem;">📝</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">New Study Material Posted</h4>
+                        <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Prof. Grace Hopper uploaded "Operating Systems Scheduling Handout.pdf".</p>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">2 hours ago</span>
+                    </div>
+                </div>
+                <div style="background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.15); border-radius: 12px; padding: 0.75rem 1rem; display: flex; gap: 0.75rem; align-items: flex-start; text-align: left;">
+                    <div style="font-size: 1.25rem;">🏆</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">New Achievement Badge!</h4>
+                        <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">You unlocked the **Syllabus Explorer** badge for viewing all course materials.</p>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">1 day ago</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; gap: 0.75rem; align-items: flex-start; text-align: left;">
+                    <div style="font-size: 1.25rem;">💬</div>
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Forum Reply Received</h4>
+                        <p style="margin: 0.15rem 0 0 0; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;">Ada Lovelace replied to your thread "Discrete Mathematics Study Group".</p>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block; margin-top: 0.25rem;">2 days ago</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('notifications-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grades Modal -->
+    <div class="modal-overlay" id="grades-modal">
+        <div class="glass-card modal-container" style="max-width: 480px; width: 90%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <h3>Academic Grades Summary</h3>
+                <button class="btn-icon" onclick="closeModal('grades-modal')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Civic Education (CS-201)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Instructor: Grace Hopper</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.1rem; font-weight: 800; color: var(--success);">92%</span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block;">Grade A</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Introduction to Programming (CS-101)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Instructor: Turing Teacher</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.1rem; font-weight: 800; color: var(--success);">88%</span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block;">Grade B+</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Discrete Mathematics (CS-103)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Instructor: Turing Teacher</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.1rem; font-weight: 800; color: var(--warning);">75%</span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block;">Grade C+</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Operating Systems (CS-202)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Instructor: Grace Hopper</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 1.1rem; font-weight: 800; color: var(--success);">84%</span>
+                        <span style="font-size: 0.65rem; color: var(--text-muted); display: block;">Grade B</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('grades-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resources Modal -->
+    <div class="modal-overlay" id="resources-modal">
+        <div class="glass-card modal-container" style="max-width: 480px; width: 90%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <h3>Academic & Study Resources</h3>
+                <button class="btn-icon" onclick="closeModal('resources-modal')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.85rem;">
+                <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">📔 MIT OpenCourseWare</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Syllabus material and exams repository</span>
+                    </div>
+                    <a href="https://ocw.mit.edu/" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.7rem; border-radius: 6px; text-decoration: none;">Open Link</a>
+                </div>
+                <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">📘 Python Docs (v3.10)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Official standard library and reference guides</span>
+                    </div>
+                    <a href="https://docs.python.org/3/" target="_blank" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.7rem; border-radius: 6px; text-decoration: none;">Open Link</a>
+                </div>
+                <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">📒 Database Normalization Sheet</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Review guide on 1NF, 2NF, 3NF, BCNF rules</span>
+                    </div>
+                    <a href="data:text/plain;charset=utf-8,INKBIT%20LMS%20-%20Cheat%20Sheet%0A%0A1.%20Python%20Basics%0A2.%20Discrete%20Math%20Formulas%0A3.%20Study%20Tips%20%26%20Guidelines" download="cheatsheet.txt" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.7rem; border-radius: 6px; text-decoration: none;">Download</a>
+                </div>
+                <div style="padding: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">📕 OS Concepts Textbook Slides</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Lecture presentation templates</span>
+                    </div>
+                    <a href="data:text/plain;charset=utf-8,INKBIT%20LMS%20-%20Slide%20Deck%20Notes%0A%0A- Slide 1: Welcome to the Course%0A- Slide 2: Syllabus Overview%0A- Slide 3: Assignments Timeline" download="slides.txt" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.7rem; border-radius: 6px; text-decoration: none;">Download</a>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('resources-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financials Modal -->
+    <div class="modal-overlay" id="financials-modal">
+        <div class="glass-card modal-container" style="max-width: 480px; width: 90%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <h3>Billing & Financial Invoices</h3>
+                <button class="btn-icon" onclick="closeModal('financials-modal')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="max-height: 50vh; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem;">
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Subscription Node License (June)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Invoice #INV-2026-006 • Node Renewal</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.95rem; font-weight: 800; color: var(--success);">$1,250.00</span>
+                        <span style="font-size: 0.65rem; color: var(--success); font-weight: 700; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 10px; display: block; margin-top: 0.15rem;">PAID</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Subscription Node License (May)</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Invoice #INV-2026-005 • Node Renewal</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.95rem; font-weight: 800; color: var(--success);">$1,250.00</span>
+                        <span style="font-size: 0.65rem; color: var(--success); font-weight: 700; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 10px; display: block; margin-top: 0.15rem;">PAID</span>
+                    </div>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.85rem; font-weight: 700; color: #fff;">Node Setup & Provisioning Setup</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Invoice #INV-2026-004 • Initial Setup</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.95rem; font-weight: 800; color: var(--success);">$2,500.00</span>
+                        <span style="font-size: 0.65rem; color: var(--success); font-weight: 700; background: rgba(16,185,129,0.15); padding: 2px 6px; border-radius: 10px; display: block; margin-top: 0.15rem;">PAID</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('financials-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal-overlay" id="change-password-modal">
+        <div class="glass-card modal-container" style="max-width: 400px; width: 90%;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;">
+                <h3>Change Account Password</h3>
+                <button class="btn-icon" onclick="closeModal('change-password-modal')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                    <svg class="feather" viewBox="0 0 24 24" style="width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.5;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form action="{{ url_for('change_password') }}" method="POST" style="text-align: left;">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="change-pass-current" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">Current Password</label>
+                    <input type="password" id="change-pass-current" name="current_password" class="form-control" style="width: 100%; border-radius: 8px; padding: 0.65rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: #fff;" required placeholder="Enter current password">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="change-pass-new" class="form-label" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">New Password</label>
+                    <input type="password" id="change-pass-new" name="new_password" class="form-control" style="width: 100%; border-radius: 8px; padding: 0.65rem; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: #fff;" required placeholder="Enter strong new password">
+                </div>
+                <div class="modal-footer" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('change-password-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    {% if current_user.is_authenticated %}
+    <!-- AI Chatbot Widget -->
+    <div id="ai-chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 10000; font-family: 'Inter', sans-serif;">
+        <!-- Toggle Button -->
+        <button id="ai-chat-toggle" class="btn btn-primary" style="border-radius: 50px; padding: 0.8rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 8px 32px rgba(37, 99, 235, 0.4); font-weight: 600; cursor: pointer;">
+            🤖 {{ _t('ai_tutor') }}
+        </button>
+        
+        <!-- Chat Panel -->
+        <div id="ai-chat-panel" class="glass-card" style="display: none; width: 350px; height: 450px; position: absolute; bottom: 70px; right: 0; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color); overflow: hidden; padding: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);">
+            <!-- Panel Header -->
+            <div style="background: rgba(37, 99, 235, 0.2); padding: 1rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);">
+                <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                    🤖 {{ _t('ai_tutor') }}
+                </h4>
+                <button id="ai-chat-close" class="btn-icon" style="padding: 0.2rem; cursor: pointer; border: none; background: none; color: #fff; font-size: 1rem;">✕</button>
+            </div>
+            
+            <!-- Message Area -->
+            <div id="ai-chat-messages" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.85rem;">
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 0.75rem; border-radius: 12px; max-width: 85%; align-self: flex-start; line-height: 1.4; color: var(--text-secondary);">
+                    Hi! I'm your AI learning assistant. Ask me anything about your courses, assignments, or quizzes!
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div style="padding: 0.75rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.5rem; background: rgba(0,0,0,0.2);">
+                <input type="text" id="ai-chat-input" placeholder="Type a message..." style="flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.5rem 0.75rem; color: #fff; font-size: 0.85rem;" onkeydown="if(event.key==='Enter') sendChatMessage()">
+                <button class="btn btn-primary" onclick="sendChatMessage()" style="padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 600;">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const toggleBtn = document.getElementById('ai-chat-toggle');
+        const chatPanel = document.getElementById('ai-chat-panel');
+        const closeBtn = document.getElementById('ai-chat-close');
+        const chatMessages = document.getElementById('ai-chat-messages');
+        const chatInput = document.getElementById('ai-chat-input');
+        
+        chatPanel.style.display = 'none';
+        toggleBtn.addEventListener('click', () => {
+            chatPanel.style.display = chatPanel.style.display === 'none' ? 'flex' : 'none';
+        });
+        closeBtn.addEventListener('click', () => {
+            chatPanel.style.display = 'none';
+        });
+        
+        function sendChatMessage() {
+            const text = chatInput.value.trim();
+            if(!text) return;
+            
+            appendMessage(text, 'user');
+            chatInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            let course_id = null;
+            const match = window.location.pathname.match(/\/course\/(\d+)/);
+            if (match) {
+                course_id = parseInt(match[1]);
+            }
+            
+            fetch('/api/ai-tutor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text, course_id: course_id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                appendMessage(data.reply, 'ai');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            })
+            .catch(err => {
+                appendMessage("Error: Could not connect to AI server.", 'ai');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+        
+        function appendMessage(text, sender) {
+            const msg = document.createElement('div');
+            msg.style.padding = '0.75rem';
+            msg.style.borderRadius = '12px';
+            msg.style.maxWidth = '85%';
+            msg.style.lineHeight = '1.4';
+            
+            if (sender === 'user') {
+                msg.style.background = 'var(--primary)';
+                msg.style.color = '#fff';
+                msg.style.alignSelf = 'flex-end';
+            } else {
+                msg.style.background = 'rgba(255, 255, 255, 0.05)';
+                msg.style.color = 'var(--text-secondary)';
+                msg.style.alignSelf = 'flex-start';
+            }
+            
+            msg.textContent = text;
+            chatMessages.appendChild(msg);
+        }
+    </script>
+    {% endif %}
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

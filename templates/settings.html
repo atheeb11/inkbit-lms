@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div class="center-panel" style="max-width: 800px; margin: 0 auto;">
+    
+    <div class="welcome-banner" style="margin-bottom: 2rem;">
+        <h1 style="margin: 0 0 0.5rem 0; font-size: 1.75rem;">LMS System Settings</h1>
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+            Customize your personal profile, adjust the dashboard themes, and link your Telegram account for instant notifications.
+        </p>
+    </div>
+
+    <form action="{{ url_for('settings') }}" method="POST" enctype="multipart/form-data" class="glass-card" style="padding: 2.5rem;">
+        
+        <!-- SECTION 1: PROFILE SETTINGS -->
+        <h3 class="settings-section-title">Profile Settings</h3>
+        
+        <!-- Profile Picture Upload Area -->
+        <div class="form-group" style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <div class="user-avatar" style="width: 70px; height: 70px; font-size: 1.75rem; border-radius: 50%; overflow: hidden; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid var(--border-color);">
+                {% if current_user.profile_photo %}
+                    <img src="{{ url_for('download_file', filename=current_user.profile_photo) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    {{ current_user.name[0] | upper if current_user.name else 'U' }}
+                {% endif %}
+            </div>
+            <div style="flex: 1;">
+                <label for="profile-photo" class="form-label">Upload Profile Picture</label>
+                <input type="file" id="profile-photo" name="photo" class="form-control" style="padding: 0.5rem;" accept="image/*">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="profile-name" class="form-label">Full Name</label>
+            <input type="text" id="profile-name" name="name" class="form-control" value="{{ current_user.name }}" required placeholder="Your full name">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" value="{{ current_user.email }}" readonly style="opacity: 0.6; cursor: not-allowed;" title="Email address cannot be changed.">
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem;">
+                Your email is used for account authentication and cannot be modified.
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label for="profile-bio" class="form-label">Short Biography</label>
+            <textarea id="profile-bio" name="bio" class="form-control" placeholder="Tell us a bit about yourself..." rows="3">{{ current_user.profile_bio or '' }}</textarea>
+        </div>
+
+        <!-- SECTION 2: SOCIAL MEDIA LINKS -->
+        <h3 class="settings-section-title" style="margin-top: 2.5rem;">Social Media Links</h3>
+        <div class="responsive-grid-1-1" style="gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="form-group">
+                <label for="social-whatsapp" class="form-label">WhatsApp Number</label>
+                <input type="text" id="social-whatsapp" name="whatsapp" class="form-control" value="{{ current_user.social_whatsapp or '' }}" placeholder="e.g. +628123456789">
+            </div>
+            <div class="form-group">
+                <label for="social-instagram" class="form-label">Instagram Username</label>
+                <input type="text" id="social-instagram" name="instagram" class="form-control" value="{{ current_user.social_instagram or '' }}" placeholder="e.g. username">
+            </div>
+            <div class="form-group">
+                <label for="social-telegram" class="form-label">Telegram Username</label>
+                <input type="text" id="social-telegram" name="telegram" class="form-control" value="{{ current_user.social_telegram or '' }}" placeholder="e.g. username">
+            </div>
+            <div class="form-group">
+                <label for="social-linkedin" class="form-label">LinkedIn Profile URL</label>
+                <input type="text" id="social-linkedin" name="linkedin" class="form-control" value="{{ current_user.social_linkedin or '' }}" placeholder="e.g. linkedin.com/in/username">
+            </div>
+        </div>
+
+        <!-- SECTION 2: THEME CUSTOMIZATION -->
+        <h3 class="settings-section-title" style="margin-top: 2.5rem;">Theme & Visuals</h3>
+        <div class="form-group">
+            <label class="form-label">Interface Theme Preset</label>
+            <input type="hidden" id="theme-input" name="theme" value="{{ current_user.preferred_theme or 'dark-glass' }}">
+            
+            <div class="theme-options-grid">
+                <!-- Theme Card 1: Default Space Blue -->
+                <div class="theme-option-card {% if current_user.preferred_theme == 'dark-glass' or not current_user.preferred_theme %}active{% endif %}" data-theme-value="dark-glass" onclick="selectThemePreset('dark-glass')">
+                    <span style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Space Blue</span>
+                    <div class="theme-color-preview">
+                        <div class="theme-color-dot" style="background: hsl(210, 100%, 55%);"></div>
+                        <div class="theme-color-dot" style="background: hsl(190, 100%, 45%);"></div>
+                    </div>
+                </div>
+
+                <!-- Theme Card 2: Cyberpunk Purple -->
+                <div class="theme-option-card {% if current_user.preferred_theme == 'theme-cyberpunk' %}active{% endif %}" data-theme-value="theme-cyberpunk" onclick="selectThemePreset('theme-cyberpunk')">
+                    <span style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Cyber Pink</span>
+                    <div class="theme-color-preview">
+                        <div class="theme-color-dot" style="background: hsl(290, 100%, 60%);"></div>
+                        <div class="theme-color-dot" style="background: hsl(320, 100%, 50%);"></div>
+                    </div>
+                </div>
+
+                <!-- Theme Card 3: Emerald Forest -->
+                <div class="theme-option-card {% if current_user.preferred_theme == 'theme-emerald' %}active{% endif %}" data-theme-value="theme-emerald" onclick="selectThemePreset('theme-emerald')">
+                    <span style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Mint Emerald</span>
+                    <div class="theme-color-preview">
+                        <div class="theme-color-dot" style="background: hsl(142, 70%, 45%);"></div>
+                        <div class="theme-color-dot" style="background: hsl(160, 80%, 40%);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: TELEGRAM INTEGRATION -->
+        <h3 class="settings-section-title" style="margin-top: 2.5rem;">Telegram Notification Settings</h3>
+        <div class="form-group">
+            <div class="toggle-switch-container">
+                <div class="switch-label-wrapper">
+                    <strong style="font-size: 0.9rem;">Enable Real-time Alerts</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">
+                        Receive instant notifications when assignments are submitted or graded.
+                    </span>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="telegram_notifications" id="telegram-toggle" {% if current_user.telegram_notifications %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group" id="telegram-chat-config-group" style="{% if not current_user.telegram_notifications %}display: none;{% endif %} margin-top: 1rem;">
+            <label for="telegram_chat_id" class="form-label">Your Telegram Chat ID</label>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <input type="text" id="telegram_chat_id" name="telegram_chat_id" class="form-control" placeholder="e.g. 123456789" value="{{ current_user.telegram_chat_id or '' }}">
+                <button type="button" class="btn btn-secondary" id="btn-discover-chat-id" style="padding: 0.75rem 1rem; font-size: 0.85rem; white-space: nowrap;">
+                    Auto-Discover
+                </button>
+            </div>
+            
+            <div id="discover-status-msg" style="font-size: 0.75rem; display: none; margin-bottom: 1rem; padding: 0.5rem; border-radius: 6px; border: 1px solid transparent;"></div>
+
+            <div style="background: hsla(var(--hue), var(--sat), 4%, 0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; font-size: 0.8rem; line-height: 1.5;">
+                <strong style="color: var(--secondary); display: block; margin-bottom: 0.5rem;">💡 How to get your Chat ID:</strong>
+                <ol style="margin-left: 1.25rem;">
+                    <li>Message our support bot on Telegram.</li>
+                    <li>Send any message (e.g. <code>hello</code>) to the bot.</li>
+                    <li>Click the <strong>Auto-Discover</strong> button above to retrieve and link your Chat ID automatically.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div style="margin-top: 2.5rem; display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <a href="/" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 1. Theme Selection Preview
+    function selectThemePreset(themeName) {
+        const themeInput = document.getElementById('theme-input');
+        themeInput.value = themeName;
+
+        // Toggle card active states
+        document.querySelectorAll('.theme-option-card').forEach(card => {
+            if (card.getAttribute('data-theme-value') === themeName) {
+                card.classList.add('active');
+            } else {
+                card.classList.remove('active');
+            }
+        });
+
+        // Apply theme immediately to preview
+        const htmlElement = document.documentElement;
+        // Remove existing theme classes
+        htmlElement.classList.remove('dark-glass', 'theme-cyberpunk', 'theme-emerald');
+        if (themeName !== 'dark-glass') {
+            htmlElement.classList.add(themeName);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // 2. Toggle Switch Configuration Visibility
+        const tgToggle = document.getElementById('telegram-toggle');
+        const tgConfig = document.getElementById('telegram-chat-config-group');
+
+        if (tgToggle && tgConfig) {
+            tgToggle.addEventListener('change', () => {
+                tgConfig.style.display = tgToggle.checked ? 'block' : 'none';
+            });
+        }
+
+        // 3. Auto-Discover Telegram Chat ID
+        const btnDiscover = document.getElementById('btn-discover-chat-id');
+        const inputChatId = document.getElementById('telegram_chat_id');
+        const statusMsg = document.getElementById('discover-status-msg');
+
+        if (btnDiscover && inputChatId && statusMsg) {
+            btnDiscover.addEventListener('click', async () => {
+                btnDiscover.disabled = true;
+                btnDiscover.innerText = 'Searching...';
+                statusMsg.style.display = 'none';
+
+                try {
+                    const response = await fetch('/api/telegram/discover-chat-id');
+                    const data = await response.json();
+
+                    statusMsg.style.display = 'block';
+                    if (data.ok) {
+                        inputChatId.value = data.chat_id;
+                        statusMsg.className = 'alert-success';
+                        statusMsg.style.borderColor = 'var(--success)';
+                        statusMsg.style.background = 'rgba(16, 185, 129, 0.1)';
+                        statusMsg.style.color = 'var(--success)';
+                        statusMsg.innerHTML = `✅ Found chat for <strong>${data.first_name}</strong> (@${data.username}). Chat ID set!`;
+                    } else {
+                        statusMsg.className = 'alert-danger';
+                        statusMsg.style.borderColor = 'var(--danger)';
+                        statusMsg.style.background = 'rgba(239, 68, 68, 0.1)';
+                        statusMsg.style.color = 'var(--danger)';
+                        statusMsg.innerHTML = `❌ ${data.error}`;
+                    }
+                } catch (err) {
+                    statusMsg.style.display = 'block';
+                    statusMsg.className = 'alert-danger';
+                    statusMsg.style.borderColor = 'var(--danger)';
+                    statusMsg.style.color = 'var(--danger)';
+                    statusMsg.innerText = 'Failed to fetch updates. Please try again.';
+                } finally {
+                    btnDiscover.disabled = false;
+                    btnDiscover.innerText = 'Auto-Discover';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

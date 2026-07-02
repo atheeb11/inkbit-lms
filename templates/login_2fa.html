@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block title %}2FA Authentication - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper" style="max-width: 450px; margin: 4rem auto; padding: 1rem;">
+    <div class="auth-header" style="text-align: center; margin-bottom: 2rem;">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="INKBIT Logo" class="auth-logo" style="height: 80px; margin-bottom: 1rem;">
+        <h1>Two-Factor Verification</h1>
+        <p style="color: var(--text-secondary); margin-top: -0.5rem;">Enter the security code to complete your login</p>
+    </div>
+
+
+
+    <div class="glass-card" style="padding: 2rem; border-radius: 16px; border: 1px solid var(--border-color); background: rgba(7, 10, 19, 0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+        <form action="{{ url_for('login_2fa') }}" method="POST">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔑</div>
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">Logging in as <strong>{{ email }}</strong></span>
+            </div>
+
+            <div class="form-group">
+                <label for="2fa-otp-input" class="form-label">6-Digit 2FA Code</label>
+                <input type="text" id="2fa-otp-input" name="otp" class="form-control" placeholder="123456" maxlength="6" pattern="\d{6}" required autofocus style="text-align: center; font-size: 1.5rem; font-weight: 800; letter-spacing: 4px; padding: 0.75rem;">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.75rem; padding: 0.85rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                ✓ Confirm and Log In
+            </button>
+        </form>
+
+        <div style="text-align: center; font-size: 0.85rem; color: var(--text-secondary); margin-top: 1.5rem;">
+            Back to <a href="{{ url_for('login') }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">Sign In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

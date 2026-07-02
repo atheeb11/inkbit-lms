@@ -1,0 +1,11 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.log
+instance/
+uploads/
+.idea/
+.vscode/
+public_url.txt
+.env

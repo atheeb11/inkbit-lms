@@ -1,0 +1,22 @@
+{
+  "name": "INKBIT LMS - Study Studio",
+  "short_name": "INKBIT",
+  "description": "Premium Learning Management System with Self-Learning AI Hub, streaks, interactive quizzes, and offline learning.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1224",
+  "theme_color": "#1e2640",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

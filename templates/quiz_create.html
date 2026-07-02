@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Quiz - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <a href="{{ url_for('course_detail', course_id=course.id) }}#quizzes" style="color: var(--secondary); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+        <svg class="feather" style="width: 16px; height: 16px;" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Cancel and return
+    </a>
+    <h1 style="margin-top: 0.5rem;">Quiz Builder</h1>
+    <p style="color: var(--text-secondary); margin-top: -0.5rem;">Course: {{ course.name }} ({{ course.code }})</p>
+</div>
+
+<div class="glass-card" style="margin-bottom: 2rem; border-color: rgba(139, 92, 246, 0.3);">
+    <h3 style="color: var(--secondary); display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.5rem 0;">
+        🪄 AI Quiz Generator
+    </h3>
+    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+        Specify a topic and number of questions to automatically generate multiple-choice questions using Gemini.
+    </p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
+        <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.8rem;">Topic / Concept</label>
+            <input type="text" id="ai-quiz-topic" class="form-control" placeholder="e.g. List Comprehension in Python" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+        </div>
+        <div class="form-group" style="width: 170px; margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.8rem;">Number of Questions (5-100)</label>
+            <input type="number" id="ai-quiz-num" class="form-control" value="5" min="5" max="100" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+        </div>
+        <button type="button" class="btn btn-primary" id="ai-quiz-btn" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; background: linear-gradient(135deg, #7c3aed 0%, #2563eb 100%); border: none; font-weight: 700; display: flex; align-items: center; gap: 0.35rem; border-radius: 6px;">
+            Generate with AI
+        </button>
+    </div>
+</div>
+
+<form action="{{ url_for('create_quiz', course_id=course.id) }}" method="POST" id="quiz-builder-form">
+    <div class="responsive-grid-1-2">
+        
+        <!-- Left Column: Quiz Info -->
+        <div class="glass-card">
+            <h3>Quiz Information</h3>
+            <div class="form-group" style="margin-top: 1rem;">
+                <label for="quiz-title" class="form-label">Quiz Title</label>
+                <input type="text" id="quiz-title" name="title" class="form-control" placeholder="e.g. Week 1 Review" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="quiz-desc" class="form-label">Description / Syllabus</label>
+                <textarea id="quiz-desc" name="description" class="form-control" placeholder="e.g. Topics covered in lectures 1-3..." rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="quiz-due" class="form-label">Due Date (Optional)</label>
+                <input type="datetime-local" id="quiz-due" name="due_date" class="form-control">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                Publish Quiz
+            </button>
+        </div>
+
+        <!-- Right Column: Questions Builder -->
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3>Questions List</h3>
+                <button type="button" class="btn btn-secondary" id="add-question-btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    + Add Question
+                </button>
+            </div>
+            
+            <!-- Container for appended questions -->
+            <div id="questions-container">
+                <!-- Question Card Template (Will be duplicated by JS) -->
+                <div class="question-builder-card" data-index="1">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="font-size: 1rem; color: var(--secondary);">Question #1</h4>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Question Text</label>
+                        <input type="text" name="q-1-text" class="form-control" placeholder="What is the output of print(2**3)?" required>
+                    </div>
+
+                    <div class="responsive-grid-1-1" style="gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label">Option A</label>
+                            <input type="text" name="q-1-a" class="form-control" placeholder="6" required style="padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Option B</label>
+                            <input type="text" name="q-1-b" class="form-control" placeholder="8" required style="padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Option C</label>
+                            <input type="text" name="q-1-c" class="form-control" placeholder="9" required style="padding: 0.5rem 0.75rem;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Option D</label>
+                            <input type="text" name="q-1-d" class="form-control" placeholder="None of the above" required style="padding: 0.5rem 0.75rem;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Correct Answer</label>
+                        <select name="q-1-correct" class="form-control" style="padding: 0.5rem;" required>
+                            <option value="" disabled selected>Select Correct Key</option>
+                            <option value="A">Option A</option>
+                            <option value="B">Option B</option>
+                            <option value="C">Option C</option>
+                            <option value="D">Option D</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <input type="hidden" name="question_count" id="question-count-hidden" value="1">
+        </div>
+
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('questions-container');
+    const addBtn = document.getElementById('add-question-btn');
+    const hiddenCountInput = document.getElementById('question-count-hidden');
+    let questionCount = 1;
+
+    function addQuestion(text='', a='', b='', c='', d='', correct='') {
+        questionCount++;
+        hiddenCountInput.value = questionCount;
+
+        const questionCard = document.createElement('div');
+        questionCard.className = 'question-builder-card';
+        questionCard.setAttribute('data-index', questionCount);
+        questionCard.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="font-size: 1rem; color: var(--secondary);">Question #${questionCount}</h4>
+                <button type="button" class="btn-icon delete-question-btn" style="color: var(--danger); border-color: hsla(350, 80%, 50%, 0.2);">
+                    <svg class="feather" style="width:16px; height:16px;" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Question Text</label>
+                <input type="text" name="q-${questionCount}-text" class="form-control" placeholder="Write question details..." required value="${escapeHtml(text)}">
+            </div>
+
+            <div class="responsive-grid-1-1" style="gap: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Option A</label>
+                    <input type="text" name="q-${questionCount}-a" class="form-control" required style="padding: 0.5rem 0.75rem;" value="${escapeHtml(a)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Option B</label>
+                    <input type="text" name="q-${questionCount}-b" class="form-control" required style="padding: 0.5rem 0.75rem;" value="${escapeHtml(b)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Option C</label>
+                    <input type="text" name="q-${questionCount}-c" class="form-control" required style="padding: 0.5rem 0.75rem;" value="${escapeHtml(c)}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Option D</label>
+                    <input type="text" name="q-${questionCount}-d" class="form-control" required style="padding: 0.5rem 0.75rem;" value="${escapeHtml(d)}">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Correct Answer</label>
+                <select name="q-${questionCount}-correct" class="form-control" style="padding: 0.5rem;" required>
+                    <option value="" disabled ${correct === '' ? 'selected' : ''}>Select Correct Key</option>
+                    <option value="A" ${correct === 'A' ? 'selected' : ''}>Option A</option>
+                    <option value="B" ${correct === 'B' ? 'selected' : ''}>Option B</option>
+                    <option value="C" ${correct === 'C' ? 'selected' : ''}>Option C</option>
+                    <option value="D" ${correct === 'D' ? 'selected' : ''}>Option D</option>
+                </select>
+            </div>
+        `;
+        
+        container.appendChild(questionCard);
+        
+        questionCard.querySelector('.delete-question-btn').addEventListener('click', () => {
+            questionCard.remove();
+        });
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    addBtn.addEventListener('click', () => {
+        addQuestion();
+    });
+
+    // Setup AI generation trigger
+    const aiQuizBtn = document.getElementById('ai-quiz-btn');
+    if (aiQuizBtn) {
+        aiQuizBtn.addEventListener('click', () => {
+            const topic = document.getElementById('ai-quiz-topic').value.trim();
+            const count = document.getElementById('ai-quiz-num').value;
+            const countVal = parseInt(count, 10);
+            
+            if (!topic) return showToast('Please enter a quiz topic.', 'error');
+            if (isNaN(countVal) || countVal < 5 || countVal > 100) {
+                return showToast('Please enter a number of questions between 5 and 100.', 'error');
+            }
+
+            aiQuizBtn.disabled = true;
+            aiQuizBtn.innerText = 'Generating...';
+
+            fetch('/api/ai-generate-quiz', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: topic, count: count })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.title) {
+                    document.getElementById('quiz-title').value = data.title;
+                    document.getElementById('quiz-desc').value = data.description;
+                    
+                    // Clear questions container and rebuild
+                    container.innerHTML = '';
+                    questionCount = 0;
+                    hiddenCountInput.value = 0;
+                    
+                    data.questions.forEach(q => {
+                        addQuestion(q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer);
+                    });
+                    showToast('Quiz generated successfully!', 'success');
+                } else {
+                    showToast('Failed to generate quiz.', 'error');
+                }
+            })
+            .catch(err => {
+                showToast('Failed to generate quiz.', 'error');
+            })
+            .finally(() => {
+                aiQuizBtn.disabled = false;
+                aiQuizBtn.innerText = 'Generate with AI';
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

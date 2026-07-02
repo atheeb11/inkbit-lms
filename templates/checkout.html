@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ _t('checkout') }} - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div style="padding: 3rem 2rem; max-width: 600px; margin: 0 auto;">
+    <div class="glass-card animate-fade-in" style="padding: 2.5rem; text-align: center; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);">
+        
+        <!-- Icon/Illustration -->
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(37, 99, 235, 0.15); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem auto; font-size: 2rem;">
+            💳
+        </div>
+
+        <h1 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">Course Checkout</h1>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 2rem;">Please review your purchase and confirm payment details below.</p>
+
+        <!-- Course Summary Card -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span class="badge" style="background: var(--primary); font-size: 0.65rem; margin-bottom: 0.25rem; display: inline-block;">{{ course.code }}</span>
+                <h4 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text-primary);">{{ course.name }}</h4>
+            </div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">
+                ${{ "%.2f"|format(course.price) }}
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <form action="{{ url_for('checkout', course_id=course.id) }}" method="POST" id="checkout-form">
+            <!-- Simulated Credit Card Details -->
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label class="form-label" style="font-size: 0.8rem;">Cardholder Name</label>
+                <input type="text" class="form-control" placeholder="Steve Student" required style="margin-bottom: 1rem;">
+                
+                <label class="form-label" style="font-size: 0.8rem;">Card Number</label>
+                <div style="position: relative; margin-bottom: 1rem;">
+                    <input type="text" class="form-control" placeholder="4111 2222 3333 4444" pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}" maxlength="19" required>
+                </div>
+                
+                <div class="responsive-grid-1-1" style="gap: 1rem;">
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem;">Expiry Date</label>
+                        <input type="text" class="form-control" placeholder="MM/YY" maxlength="5" required>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem;">CVC / CVV</label>
+                        <input type="password" class="form-control" placeholder="•••" maxlength="3" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hint text -->
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.4; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                🛡️ Secure 256-bit SSL encrypted connection. Enter card details to complete payment.
+            </div>
+
+            <!-- Submit buttons -->
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary" style="flex: 1; padding: 0.85rem; justify-content: center;">Cancel</a>
+                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 0.85rem; justify-content: center; font-weight: 600;">
+                    Pay & Enroll
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

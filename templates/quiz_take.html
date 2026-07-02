@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Take Quiz: {{ quiz.title }} - INKBIT LMS{% endblock %}
+
+{% block content %}
+<div class="quiz-taker-container">
+    <div style="margin-bottom: 1.5rem;">
+        <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+            Course Quiz
+        </span>
+        <h2>{{ quiz.title }}</h2>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ quiz.description or 'Please read each question carefully and select the best option.' }}</p>
+    </div>
+
+    <!-- Quiz Header with Timer & Progress -->
+    <div class="glass-card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
+                Quiz Progress
+            </span>
+            <!-- Countdown Timer Widget -->
+            <div class="quiz-timer" id="quiz-timer-bar" data-duration="300">
+                <svg class="feather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Time Left: <span id="timer-count">5:00</span>
+            </div>
+        </div>
+        <div class="quiz-progress-bar">
+            <div class="quiz-progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Form container -->
+    <form id="quiz-submit-form" action="{{ url_for('submit_quiz', quiz_id=quiz.id) }}" method="POST">
+        <!-- Hidden input to store chosen answers: {"question_id": "choice"} -->
+        <input type="hidden" name="answers" id="quiz-answers-input" value="{}">
+
+        <!-- Question Slides -->
+        {% for q in quiz.questions %}
+            <div class="glass-card question-slide" data-question-id="{{ q.id }}" style="display: none;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+                    Question {{ loop.index }} of {{ quiz.questions | length }}
+                </div>
+                <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; line-height: 1.4;">{{ q.question_text }}</h3>
+                
+                <div class="quiz-options">
+                    <div class="quiz-option-card" data-choice="A">
+                        <div class="option-prefix">A</div>
+                        <div class="option-text">{{ q.option_a }}</div>
+                    </div>
+                    <div class="quiz-option-card" data-choice="B">
+                        <div class="option-prefix">B</div>
+                        <div class="option-text">{{ q.option_b }}</div>
+                    </div>
+                    <div class="quiz-option-card" data-choice="C">
+                        <div class="option-prefix">C</div>
+                        <div class="option-text">{{ q.option_c }}</div>
+                    </div>
+                    <div class="quiz-option-card" data-choice="D">
+                        <div class="option-prefix">D</div>
+                        <div class="option-text">{{ q.option_d }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Navigation Buttons -->
+        <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+            <button type="button" class="btn btn-secondary" id="prev-question-btn" style="display: none;">
+                <svg class="feather" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Previous
+            </button>
+            <div style="margin-left: auto;">
+                <button type="button" class="btn btn-primary" id="next-question-btn">
+                    Next Question
+                    <svg class="feather" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{% endblock %}
