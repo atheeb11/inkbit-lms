@@ -962,7 +962,7 @@ def send_login_notification_email(user, is_first_time, ip_address, user_agent, l
     return True
 
 
-def send_welcome_congratulations_email(user):
+def send_welcome_congratulations_email(user, temporary_password=None):
     import smtplib
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
@@ -989,6 +989,17 @@ def send_welcome_congratulations_email(user):
     title = f"Welcome to the Studio, {user_name}! 🚀"
     description = "We are absolutely thrilled to welcome you to InkBit LMS. Your email address has been successfully verified, and your account is now fully activated!"
     
+    password_row = ""
+    login_note = "You can now log in to access your dashboard, explore your courses, join live lectures, and track your learning achievements."
+    if temporary_password:
+        password_row = f"""
+        <tr>
+            <td style="padding: 10px 0; font-weight: 600; color: #64748b; border-bottom: 1px solid #f1f5f9; font-size: 14px;">Temporary Password</td>
+            <td style="padding: 10px 0; color: #e11d48; text-align: right; border-bottom: 1px solid #f1f5f9; font-size: 14px; font-weight: 700; word-break: break-all;">{temporary_password}</td>
+        </tr>
+        """
+        login_note = "Please log in using the temporary password provided above. For security purposes, you will be required to change this password on your first login."
+
     html_content = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -1020,12 +1031,13 @@ def send_welcome_congratulations_email(user):
                                     <td style="padding: 10px 0; font-weight: 600; color: #64748b; border-bottom: 1px solid #f1f5f9; font-size: 14px;">Email</td>
                                     <td style="padding: 10px 0; color: #0f172a; text-align: right; border-bottom: 1px solid #f1f5f9; font-size: 14px; word-break: break-all;">{user_email}</td>
                                 </tr>
+                                {password_row}
                                 <tr>
                                     <td style="padding: 10px 0; font-weight: 600; color: #64748b; font-size: 14px;">Account Role</td>
                                     <td style="padding: 10px 0; color: #0f172a; text-align: right; font-size: 14px; word-break: break-all;">{user_role.capitalize()}</td>
                                 </tr>
                             </table>
-                            <p style='font-size: 15px; color: #475569;'>You can now log in to access your dashboard, explore your courses, join live lectures, and track your learning achievements.</p>
+                            <p style='font-size: 15px; color: #475569;'>{login_note}</p>
                             <p style='font-size: 15px; color: #475569;'>Welcome aboard!</p>
                         </td>
                     </tr>
@@ -1778,7 +1790,7 @@ def register():
                 db.session.add(user)
                 db.session.commit()
                 log_security_event(current_user.id, f"ADMIN_CREATED_USER: {email} ({role})")
-                send_welcome_congratulations_email(user)
+                send_welcome_congratulations_email(user, temporary_password=password)
                 flash(f"User {name} registered successfully as {role.capitalize()}.", "success")
                 return redirect(url_for('index'))
             else:
