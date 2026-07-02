@@ -19,9 +19,11 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        "isolation_level": "READ COMMITTED"
-    }
+    
+    # SQLite does not support "READ COMMITTED" isolation level, only MySQL does
+    SQLALCHEMY_ENGINE_OPTIONS = {}
+    if SQLALCHEMY_DATABASE_URI.startswith("mysql"):
+        SQLALCHEMY_ENGINE_OPTIONS["isolation_level"] = "READ COMMITTED"
     
     # File Uploads
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER') or os.path.join(basedir, 'uploads')
