@@ -3053,14 +3053,12 @@ TRANSLATIONS = {
 @app.route('/api/toggle-language')
 def toggle_language():
     from flask import session
-    lang = session.get('lang', 'en')
-    session['lang'] = 'id' if lang == 'en' else 'en'
+    session['lang'] = 'en'
     return redirect(request.referrer or url_for('index'))
 
 @app.context_processor
 def inject_translations():
-    from flask import session
-    lang = session.get('lang', 'en')
+    lang = 'en'
     def translate(key):
         return TRANSLATIONS.get(lang, TRANSLATIONS['en']).get(key, key)
     return {'_t': translate, 'current_lang': lang}
