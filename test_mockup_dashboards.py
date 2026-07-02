@@ -9,6 +9,8 @@ class TestMockupDashboards(unittest.TestCase):
         self.client = app.test_client()
         self.app_context = app.app_context()
         self.app_context.push()
+        from app import seed_database
+        seed_database(seed_courses=True)
 
     def tearDown(self):
         db.session.remove()

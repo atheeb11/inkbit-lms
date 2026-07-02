@@ -11,6 +11,7 @@ def test_lms_flow():
     # Reset database enrollment for CS-201 (repeatable tests) and seed courses
     try:
         from app import app, db, seed_database
+        app.config['TESTING'] = True
         from models import Enrollment
         with app.app_context():
             seed_database(seed_courses=True)

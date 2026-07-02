@@ -107,43 +107,78 @@ def allowed_file(filename):
 
 
 def seed_database(seed_courses=False):
-    # Ensure default seeded users are marked verified and approved
-    default_seed_emails = ['teacher@inkbit.com', 'student@inkbit.com', 'institution@inkbit.com', 'teacher2@inkbit.com', 'student2@inkbit.com', 'atheeb1311@gmail.com', 'inkbitdigitalstudio@gmail.com']
-    for email in default_seed_emails:
-        user = User.query.filter_by(email=email).first()
-        if user:
-            user.is_verified = True
-            if user.role in ['teacher', 'institution']:
-                user.is_approved_by_admin = True
-    db.session.commit()
-
-    # Seed users
-    users_to_seed = [
-        ('teacher@inkbit.com', 'Turing Teacher', 'teacher', 'inkbit123'),
-        ('student@inkbit.com', 'Steve Student', 'student', 'inkbit123'),
-        ('institution@inkbit.com', 'InkBit Institute', 'institution', 'inkbit123'),
-        ('atheeb1311@gmail.com', 'Atheeb', 'student', 'Password123!'),
-        ('inkbitdigitalstudio@gmail.com', 'InkBit Studio', 'student', 'Password123!'),
-        ('teacher2@inkbit.com', 'Grace Hopper', 'teacher', 'inkbit123'),
-        ('student2@inkbit.com', 'Ada Lovelace', 'student', 'inkbit123')
-    ]
+    # Determine if we should clean up trial accounts (only in production)
+    is_production = 'RAILWAY_ENVIRONMENT' in os.environ or os.environ.get('FLASK_ENV') == 'production' or os.environ.get('CLEAN_TRIAL_ACCOUNTS') == 'True'
     
+    if is_production and not app.config.get('TESTING'):
+        trial_emails = ['teacher@inkbit.com', 'student@inkbit.com', 'institution@inkbit.com', 'teacher2@inkbit.com', 'student2@inkbit.com', 'atheeb1311@gmail.com', 'inkbitdigitalstudio@gmail.com', 'guest@inkbit.com']
+        for email in trial_emails:
+            user = User.query.filter_by(email=email).first()
+            if user:
+                db.session.delete(user)
+        db.session.commit()
+
+    # Seed production institution user (Mubarak Atheeb)
+    inst_email = 'contact.mubarakatheeb@gmail.com'
+    inst_user = User.query.filter_by(email=inst_email).first()
+    if not inst_user:
+        inst_user = User(
+            email=inst_email,
+            name='Mubarak Atheeb',
+            role='institution',
+            is_verified=True,
+            is_approved_by_admin=True
+        )
+        inst_user.set_password('contact.atheeb1113@')
+        db.session.add(inst_user)
+        db.session.commit()
+        print(f"Seeded production institution user: {inst_email}")
+    else:
+        inst_user.is_verified = True
+        inst_user.is_approved_by_admin = True
+        inst_user.role = 'institution'
+        inst_user.set_password('contact.atheeb1113@')
+        db.session.commit()
+
     seeded_users = {}
-    for email, name, role, pswd in users_to_seed:
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            is_approved = role in ['teacher', 'institution']
-            user = User(email=email, name=name, role=role, is_verified=True, is_approved_by_admin=is_approved)
-            user.set_password(pswd)
-            db.session.add(user)
-            db.session.commit()
-            print(f"Seeded user: {email}")
-        else:
-            user.is_verified = True
-            if role in ['teacher', 'institution']:
-                user.is_approved_by_admin = True
-            db.session.commit()
-        seeded_users[email] = user
+    seeded_users[inst_email] = inst_user
+
+    # Seed trial users if not in production OR if in testing mode (keeps unit tests & local dev passing)
+    if not is_production or app.config.get('TESTING'):
+        default_seed_emails = ['teacher@inkbit.com', 'student@inkbit.com', 'institution@inkbit.com', 'teacher2@inkbit.com', 'student2@inkbit.com', 'atheeb1311@gmail.com', 'inkbitdigitalstudio@gmail.com']
+        for email in default_seed_emails:
+            user = User.query.filter_by(email=email).first()
+            if user:
+                user.is_verified = True
+                if user.role in ['teacher', 'institution']:
+                    user.is_approved_by_admin = True
+        db.session.commit()
+
+        users_to_seed = [
+            ('teacher@inkbit.com', 'Turing Teacher', 'teacher', 'inkbit123'),
+            ('student@inkbit.com', 'Steve Student', 'student', 'inkbit123'),
+            ('institution@inkbit.com', 'InkBit Institute', 'institution', 'inkbit123'),
+            ('atheeb1311@gmail.com', 'Atheeb', 'student', 'Password123!'),
+            ('inkbitdigitalstudio@gmail.com', 'InkBit Studio', 'student', 'Password123!'),
+            ('teacher2@inkbit.com', 'Grace Hopper', 'teacher', 'inkbit123'),
+            ('student2@inkbit.com', 'Ada Lovelace', 'student', 'inkbit123')
+        ]
+        
+        for email, name, role, pswd in users_to_seed:
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                is_approved = role in ['teacher', 'institution']
+                user = User(email=email, name=name, role=role, is_verified=True, is_approved_by_admin=is_approved)
+                user.set_password(pswd)
+                db.session.add(user)
+                db.session.commit()
+                print(f"Seeded user: {email}")
+            else:
+                user.is_verified = True
+                if role in ['teacher', 'institution']:
+                    user.is_approved_by_admin = True
+                db.session.commit()
+            seeded_users[email] = user
 
     # Seed Courses and enrollments if Course table is empty AND seed_courses is True
     if seed_courses and Course.query.count() == 0:
