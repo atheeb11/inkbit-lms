@@ -637,16 +637,7 @@
                         <label for="remember-me" style="font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; user-select: none;">Remember me</label>
                     </div>
 
-                    <!-- CAPTCHA field -->
-                    <div class="form-group" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-top: 1.25rem;">
-                        <label class="form-label" style="margin-bottom: 0.25rem;">Security Verification</label>
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
-                            <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--secondary); background: rgba(255,255,255,0.05); padding: 0.4rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center; min-width: 100px;">
-                                {{ captcha_question }}
-                            </div>
-                            <input type="text" id="login-captcha-answer" name="captcha_answer" class="form-control" placeholder="Answer?" required style="flex: 1; text-align: center; font-size: 1.1rem; font-weight: 700;">
-                        </div>
-                    </div>
+
 
                     <button type="submit" id="sign-in-btn" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.95rem; font-weight: 600;">
                         <svg style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2;" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
@@ -755,8 +746,7 @@
             if (freeFields) freeFields.style.display = 'block';
             document.getElementById('login-email').required = false;
             document.getElementById('login-password').required = false;
-            const captcha = document.getElementById('login-captcha-answer');
-            if (captcha) captcha.required = false;
+
             
             // Hide socials
             if (divider) divider.style.display = 'none';
@@ -766,8 +756,7 @@
             if (freeFields) freeFields.style.display = 'none';
             document.getElementById('login-email').required = true;
             document.getElementById('login-password').required = true;
-            const captcha = document.getElementById('login-captcha-answer');
-            if (captcha) captcha.required = true;
+
             
             // Show socials
             if (divider) divider.style.display = 'flex';

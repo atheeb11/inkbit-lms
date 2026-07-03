@@ -1617,13 +1617,7 @@ def login():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
-        captcha_ans = request.form.get('captcha_answer', '')
-        
-        # 1. Verify CAPTCHA
-        if not verify_captcha(captcha_ans):
-            flash("Invalid CAPTCHA answer. Please try again.", "danger")
-            captcha_quest = generate_captcha()
-            return render_template('login.html', captcha_question=captcha_quest)
+
             
         user = User.query.filter_by(email=email).first()
         if user:
@@ -1639,8 +1633,7 @@ def login():
                     mins = int(diff.total_seconds() / 60) + 1
                     flash(f"This account is locked. Please try again in {mins} minutes.", "danger")
                     log_security_event(user.id, "LOGIN_BLOCKED_LOCKOUT")
-                    captcha_quest = generate_captcha()
-                    return render_template('login.html', captcha_question=captcha_quest)
+                    return render_template('login.html')
 
             if user.check_password(password):
                 # Password correct - reset failure counter
@@ -1669,8 +1662,7 @@ def login():
                 if user.role == 'teacher' and not user.is_approved_by_admin:
                     flash("Your tutor account is pending administrator approval.", "warning")
                     log_security_event(user.id, "LOGIN_FAILED_UNAPPROVED")
-                    captcha_quest = generate_captcha()
-                    return render_template('login.html', captcha_question=captcha_quest)
+                    return render_template('login.html')
 
                 # 5. Check 2FA requirement (Tutors & Admins)
                 if user.role in ['teacher', 'institution'] and (not app.config.get('TESTING') or app.config.get('TEST_2FA')) and user.last_login_date is not None:
@@ -1712,8 +1704,7 @@ def login():
             flash("Invalid email or password.", "danger")
             log_security_event(None, "LOGIN_FAILED_UNKNOWN_USER")
             
-    captcha_quest = generate_captcha()
-    return render_template('login.html', captcha_question=captcha_quest)
+    return render_template('login.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -4580,3 +4571,5 @@ def download_file(filename):
 # Main Entry Point
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)
+
+
