@@ -2692,8 +2692,8 @@ def create_quiz(course_id):
             
         opt_a = request.form.get(f'q-{i}-a')
         opt_b = request.form.get(f'q-{i}-b')
-        opt_c = request.form.get(f'q-{i}-c')
-        opt_d = request.form.get(f'q-{i}-d')
+        opt_c = request.form.get(f'q-{i}-c') or ''
+        opt_d = request.form.get(f'q-{i}-d') or ''
         correct = request.form.get(f'q-{i}-correct')
         
         question = Question(quiz_id=quiz.id, question_text=q_text, option_a=opt_a, option_b=opt_b, option_c=opt_c, option_d=opt_d, correct_answer=correct)

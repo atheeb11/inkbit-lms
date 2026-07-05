@@ -1226,14 +1226,18 @@ function renderQuizQuestion() {
                 <input type="radio" name="quiz-ans" value="B" style="accent-color: var(--primary);">
                 <span style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(q.option_b)}</span>
             </label>
+            ${q.option_c ? `
             <label class="quiz-option-item" data-val="C" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
                 <input type="radio" name="quiz-ans" value="C" style="accent-color: var(--primary);">
                 <span style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(q.option_c)}</span>
             </label>
+            ` : ''}
+            ${q.option_d ? `
             <label class="quiz-option-item" data-val="D" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
                 <input type="radio" name="quiz-ans" value="D" style="accent-color: var(--primary);">
                 <span style="font-size: 0.8rem; color: var(--text-secondary);">${escapeHtml(q.option_d)}</span>
             </label>
+            ` : ''}
         </div>
         
         <!-- Explanation block (initially hidden) -->

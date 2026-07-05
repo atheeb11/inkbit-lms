@@ -79,7 +79,7 @@
                     
                     <div class="form-group">
                         <label class="form-label">Question Text</label>
-                        <input type="text" name="q-1-text" class="form-control" placeholder="What is the output of print(2**3)?" required>
+                        <textarea name="q-1-text" class="form-control" placeholder="What is the output of print(2**3)? You can use markdown code blocks here." required rows="4" style="padding: 0.5rem 0.75rem; font-family: inherit; resize: vertical;"></textarea>
                     </div>
 
                     <div class="responsive-grid-1-1" style="gap: 1rem;">
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <div class="form-group">
                 <label class="form-label">Question Text</label>
-                <input type="text" name="q-${questionCount}-text" class="form-control" placeholder="Write question details..." required value="${escapeHtml(text)}">
+                <textarea name="q-${questionCount}-text" class="form-control" placeholder="Write question details... Support code blocks using markdown (e.g. \`\`\`python ... \`\`\`)" required rows="4" style="padding: 0.5rem 0.75rem; font-family: inherit; resize: vertical;">${escapeHtml(text)}</textarea>
             </div>
 
             <div class="responsive-grid-1-1" style="gap: 1rem;">

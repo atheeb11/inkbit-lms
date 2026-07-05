@@ -51,14 +51,18 @@
                         <div class="option-prefix">B</div>
                         <div class="option-text">{{ q.option_b }}</div>
                     </div>
+                    {% if q.option_c %}
                     <div class="quiz-option-card" data-choice="C">
                         <div class="option-prefix">C</div>
                         <div class="option-text">{{ q.option_c }}</div>
                     </div>
+                    {% endif %}
+                    {% if q.option_d %}
                     <div class="quiz-option-card" data-choice="D">
                         <div class="option-prefix">D</div>
                         <div class="option-text">{{ q.option_d }}</div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
