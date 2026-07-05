@@ -1720,46 +1720,34 @@ def register():
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
         role = request.form.get('role', 'student')
-        captcha_ans = request.form.get('captcha_answer', '')
         registration_number = request.form.get('registration_number', '').strip()
         
-        # 1. Verify CAPTCHA
-        if not is_admin and not verify_captcha(captcha_ans):
-            flash("Invalid CAPTCHA answer. Please try again.", "danger")
-            captcha_quest = generate_captcha()
-            return render_template('register.html', captcha_question=captcha_quest)
-
-        # 2. Block public teacher or institution admin registration
+        # 1. Block public teacher or institution admin registration
         if role in ['teacher', 'institution'] and not is_admin:
             flash("Tutor and Institution accounts can only be created by existing administrators.", "danger")
-            captcha_quest = generate_captcha()
-            return render_template('register.html', captcha_question=captcha_quest)
+            return render_template('register.html')
 
-        # 3. Validate Email Format
+        # 2. Validate Email Format
         if not validate_email_format(email):
             flash("Invalid email format. E.g. name@domain.com", "danger")
-            captcha_quest = generate_captcha()
-            return render_template('register.html', captcha_question=captcha_quest)
+            return render_template('register.html')
 
-        # 4. Block Disposable Emails
+        # 3. Block Disposable Emails
         if is_disposable_email(email):
             flash("Registration failed: Disposable email services are blocked.", "danger")
-            captcha_quest = generate_captcha()
-            return render_template('register.html', captcha_question=captcha_quest)
+            return render_template('register.html')
 
-        # 5. Strong Password Policy
+        # 4. Strong Password Policy
         if not validate_password_strength(password):
             flash("Password must be at least 8 characters long and contain at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character (@$!%*?&).", "danger")
-            captcha_quest = generate_captcha()
-            return render_template('register.html', captcha_question=captcha_quest)
+            return render_template('register.html')
         
-        # 6. Validate Registration Number for Students
+        # 5. Validate Registration Number for Students
         if role == 'student' and not registration_number:
             flash("Registration number is required for students.", "danger")
             if is_admin:
                 return redirect(url_for('index'))
-            captcha_quest = generate_captcha()
-            return render_template('register.html', captcha_question=captcha_quest)
+            return render_template('register.html')
             
         if registration_number:
             existing_reg = User.query.filter_by(registration_number=registration_number).first()
@@ -1767,8 +1755,7 @@ def register():
                 flash(f"Registration number '{registration_number}' is already assigned to another student.", "danger")
                 if is_admin:
                     return redirect(url_for('index'))
-                captcha_quest = generate_captcha()
-                return render_template('register.html', captcha_question=captcha_quest)
+                return render_template('register.html')
         
         if User.query.filter_by(email=email).first():
             flash("Email already registered.", "danger")
@@ -1811,8 +1798,7 @@ def register():
                 flash("Registration successful! Please verify your email with the OTP code.", "info")
                 return redirect(url_for('verify_email'))
             
-    captcha_quest = generate_captcha()
-    return render_template('register.html', captcha_question=captcha_quest)
+    return render_template('register.html')
 
 
 @app.route('/logout')

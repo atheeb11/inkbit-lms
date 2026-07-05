@@ -69,16 +69,7 @@
             <input type="hidden" name="role" value="student">
             {% endif %}
 
-            <!-- Math CAPTCHA Verification -->
-            <div class="form-group" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
-                <label class="form-label" style="margin-bottom: 0.25rem;">Security Verification</label>
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.25rem;">
-                    <div style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--secondary); background: rgba(255,255,255,0.05); padding: 0.4rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center; min-width: 100px;">
-                        {{ captcha_question }}
-                    </div>
-                    <input type="text" name="captcha_answer" class="form-control" placeholder="Answer?" required style="flex: 1; text-align: center; font-size: 1.1rem; font-weight: 700;">
-                </div>
-            </div>
+
 
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.85rem;">
                 Create Account
