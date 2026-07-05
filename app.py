@@ -3518,6 +3518,7 @@ def ai_generate_quiz():
         
     data = request.json or {}
     topic = data.get('topic', '').strip()
+    code_snippet = data.get('code_snippet', '').strip()
     count = int(data.get('count', 5))
     
     # Enforce minimum 5 and maximum 100 questions
@@ -3529,15 +3530,20 @@ def ai_generate_quiz():
     if not topic:
         return {'error': 'Topic is required'}, 400
         
+    code_context = ""
+    if code_snippet:
+        code_context = f"\nREFERENCE CODE SNIPPET FOR THE QUIZ:\n```\n{code_snippet}\n```\nGenerate questions that test comprehension, debugging, output prediction, or syntax details directly from the code snippet above."
+
     system_prompt = f"""
-    You are an academic quiz maker. Generate EXACTLY {count} multiple choice questions about the topic '{topic}'.
+    You are an academic quiz maker. Generate EXACTLY {count} multiple choice questions about the topic '{topic}'.{code_context}
     IMPORTANT: Provide clear, educational, and concise questions.
 
-    If the topic is related to computer science, programming, coding, software development, scripting, or databases (like SQL):
-    - You MUST generate some questions that test code analysis, syntax comprehension, and predicting execution output/results.
-    - Include code snippets directly inside the "question_text" field using markdown code block syntax (e.g. ```python\n[code]\n``` or ```sql\n[query]\n```).
-    Example:
-    "Consider the following Python code snippet. When will the `print('Success!')` statement execute?\n\n```python\ntry:\n    result = 10 / value\nexcept ZeroDivisionError:\n    print('Error!')\nelse:\n    print('Success!')\n```"
+    If the topic is related to computer science, programming, coding, software development, scripting, or databases (like SQL), OR if a Reference Code Snippet is provided:
+    - You MUST generate a diverse mix of questions based on coding concepts:
+      1. Code execution/output prediction: Include a multi-line code block in the "question_text" using markdown code block syntax (e.g. ```python\n[code]\n```) and ask what the output or result is.
+      2. True/False questions: Ask a true/false statement (e.g. "The built-in len() function can be used to find the number of key-value pairs in a Python dictionary."). Set "option_a" to "True", "option_b" to "False", and leave "option_c" and "option_d" as empty strings ("").
+      3. Syntax and APIs: Ask how to perform a task (e.g. "How do you add a new key 'city' to a dictionary named 'user'?") with code options in option_a, option_b, option_c, option_d.
+      4. Conceptual understanding: Ask questions with inline code ticks (e.g. `my_list[1:3]`) in the question text.
 
     Return ONLY a JSON object matching the following structure:
     {{

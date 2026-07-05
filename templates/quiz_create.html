@@ -32,6 +32,10 @@
             Generate with AI
         </button>
     </div>
+    <div style="margin-top: 1rem;">
+        <label class="form-label" style="font-size: 0.8rem;">Reference Code Snippet (Optional)</label>
+        <textarea id="ai-quiz-code" class="form-control" placeholder="Paste your JavaScript, Python, or SQL code here to generate questions about it..." rows="4" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; font-family: 'Consolas', 'Courier New', monospace; resize: vertical;"></textarea>
+    </div>
 </div>
 
 <form action="{{ url_for('create_quiz', course_id=course.id) }}" method="POST" id="quiz-builder-form">
@@ -200,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (aiQuizBtn) {
         aiQuizBtn.addEventListener('click', () => {
             const topic = document.getElementById('ai-quiz-topic').value.trim();
+            const code = document.getElementById('ai-quiz-code').value.trim();
             const count = document.getElementById('ai-quiz-num').value;
             const countVal = parseInt(count, 10);
             
@@ -214,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('/api/ai-generate-quiz', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic: topic, count: count })
+                body: JSON.stringify({ topic: topic, count: count, code_snippet: code })
             })
             .then(r => r.json())
             .then(data => {
