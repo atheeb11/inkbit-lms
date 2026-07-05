@@ -3527,6 +3527,9 @@ def ai_generate_quiz():
     elif count > 100:
         count = 100
         
+    if not topic and code_snippet:
+        topic = "Code Analysis"
+
     if not topic:
         return {'error': 'Topic is required'}, 400
         

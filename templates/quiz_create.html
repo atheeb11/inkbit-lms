@@ -203,10 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiQuizBtn = document.getElementById('ai-quiz-btn');
     if (aiQuizBtn) {
         aiQuizBtn.addEventListener('click', () => {
-            const topic = document.getElementById('ai-quiz-topic').value.trim();
+            let topic = document.getElementById('ai-quiz-topic').value.trim();
             const code = document.getElementById('ai-quiz-code').value.trim();
             const count = document.getElementById('ai-quiz-num').value;
             const countVal = parseInt(count, 10);
+            
+            if (!topic && code) {
+                topic = 'Code Analysis';
+            }
             
             if (!topic) return showToast('Please enter a quiz topic.', 'error');
             if (isNaN(countVal) || countVal < 5 || countVal > 100) {
