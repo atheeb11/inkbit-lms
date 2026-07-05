@@ -87,6 +87,7 @@ class Course(db.Model):
     assignments = db.relationship('Assignment', backref='course', lazy=True, cascade="all, delete-orphan")
     quizzes = db.relationship('Quiz', backref='course', lazy=True, cascade="all, delete-orphan")
     progress_records = db.relationship('Progress', backref='course', lazy=True, cascade="all, delete-orphan")
+    forum_threads = db.relationship('ForumThread', backref='course', lazy=True, cascade="all, delete-orphan")
 
 
 class Enrollment(db.Model):
@@ -211,7 +212,7 @@ class ForumThread(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Relationships
-    author = db.relationship('User', backref=db.backref('threads', lazy=True))
+    author = db.relationship('User', backref=db.backref('threads', lazy=True, cascade="all, delete-orphan"))
     replies = db.relationship('ForumReply', backref='thread', lazy=True, cascade="all, delete-orphan")
 
 
@@ -224,7 +225,7 @@ class ForumReply(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Relationships
-    author = db.relationship('User', backref=db.backref('replies', lazy=True))
+    author = db.relationship('User', backref=db.backref('replies', lazy=True, cascade="all, delete-orphan"))
 
 
 class Badge(db.Model):
@@ -247,8 +248,8 @@ class Certificate(db.Model):
     is_approved = db.Column(db.Boolean, default=False)
     
     # Relationships
-    student = db.relationship('User', backref=db.backref('certificates', lazy=True))
-    course = db.relationship('Course', backref=db.backref('certificates', lazy=True))
+    student = db.relationship('User', backref=db.backref('certificates', lazy=True, cascade="all, delete-orphan"))
+    course = db.relationship('Course', backref=db.backref('certificates', lazy=True, cascade="all, delete-orphan"))
 
 
 class AuditLog(db.Model):
