@@ -140,4 +140,42 @@ document.addEventListener('DOMContentLoaded', () => {
         // Submit the form
         form.submit();
     }
+
+    // Format all question texts with code blocks on load
+    document.querySelectorAll('.quiz-question-text').forEach(el => {
+        el.innerHTML = formatQuestionText(el.textContent);
+    });
 });
+
+function formatQuestionText(text) {
+    if (!text) return '';
+    
+    // First, escape HTML characters to prevent rendering problems
+    let escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    // Extract and preserve code blocks (```python ... ```)
+    const codeBlocks = [];
+    escaped = escaped.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)\n```/g, function(match, code) {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre style="background: #0b0e14; border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.9rem; color: #f8f8f2; overflow-x: auto; margin: 1rem 0; text-align: left; line-height: 1.5; font-weight: 400;"><code style="font-family: inherit; white-space: pre;">${code}</code></pre>`);
+        return placeholder;
+    });
+
+    // Replace inline code blocks: `code`
+    escaped = escaped.replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.06); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: \'Consolas\', \'Courier New\', monospace; font-size: 0.9em; color: var(--secondary); font-weight: 500;">$1</code>');
+
+    // Replace newlines with <br> to preserve line breaks
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    // Restore the formatted code blocks
+    codeBlocks.forEach((blockHtml, index) => {
+        escaped = escaped.replace(`__CODE_BLOCK_PLACEHOLDER_${index}__`, blockHtml);
+    });
+
+    return escaped;
+}

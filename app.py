@@ -3532,6 +3532,13 @@ def ai_generate_quiz():
     system_prompt = f"""
     You are an academic quiz maker. Generate EXACTLY {count} multiple choice questions about the topic '{topic}'.
     IMPORTANT: Provide clear, educational, and concise questions.
+
+    If the topic is related to computer science, programming, coding, software development, scripting, or databases (like SQL):
+    - You MUST generate some questions that test code analysis, syntax comprehension, and predicting execution output/results.
+    - Include code snippets directly inside the "question_text" field using markdown code block syntax (e.g. ```python\n[code]\n``` or ```sql\n[query]\n```).
+    Example:
+    "Consider the following Python code snippet. When will the `print('Success!')` statement execute?\n\n```python\ntry:\n    result = 10 / value\nexcept ZeroDivisionError:\n    print('Error!')\nelse:\n    print('Success!')\n```"
+
     Return ONLY a JSON object matching the following structure:
     {{
       "title": "Quiz Title",
@@ -3911,6 +3918,10 @@ def self_learning_generate_quiz():
         
     prompt = f"""
     Based on the following learning material, generate an interactive practice quiz containing 3 multiple choice questions.
+
+    If the material contains coding, programming, scripting, database commands, software development topics, or mathematical code syntax:
+    - You MUST include relevant code snippets or query blocks inside the "question_text" field using markdown code block syntax (e.g. ```python\n[code]\n``` or ```sql\n[query]\n```) to test syntax analysis and execution output prediction.
+
     Return ONLY a JSON object matching this structure:
     {{
       "title": "Quiz Title (from material)",

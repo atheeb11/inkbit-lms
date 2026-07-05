@@ -1215,7 +1215,7 @@ function renderQuizQuestion() {
     const container = document.getElementById('quiz-question-container');
     container.innerHTML = `
         <h4 style="font-size: 0.9rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1rem; line-height: 1.4;">
-            ${idx + 1}. ${escapeHtml(q.question_text)}
+            ${idx + 1}. ${formatQuestionText(q.question_text)}
         </h4>
         <div style="display: flex; flex-direction: column; gap: 0.65rem;" id="quiz-options-list">
             <label class="quiz-option-item" data-val="A" style="display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem; border-radius: 10px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease;">
@@ -1335,7 +1335,7 @@ function nextQuizQuestion() {
                     reviewHtml += `
                         <div style="background:rgba(255,255,255,0.01); border:1px solid var(--border-color); border-radius:10px; padding:0.85rem; display:flex; flex-direction:column; gap:0.35rem; text-align:left; margin-bottom: 0.5rem;">
                             <span style="font-size:0.75rem; font-weight:700; color:${isCorrect ? 'var(--success)' : 'var(--danger)'};">${i + 1}. ${isCorrect ? '✅ Correct' : '❌ Incorrect'}</span>
-                            <p style="margin:0; font-size:0.8rem; font-weight:600; color:var(--text-primary);">${escapeHtml(questionItem.question_text)}</p>
+                            <div style="margin:0; font-size:0.8rem; font-weight:600; color:var(--text-primary);">${formatQuestionText(questionItem.question_text)}</div>
                             <span style="font-size:0.72rem; color:var(--text-secondary);">Your Answer: <strong>${selected}</strong> | Correct: <strong>${correct}</strong></span>
                             <p style="margin:0.25rem 0 0 0; font-size:0.72rem; color:var(--text-muted); font-style:italic;">💡 ${escapeHtml(questionItem.explanation || 'Rationale review.')}</p>
                         </div>
@@ -1656,6 +1656,39 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function formatQuestionText(text) {
+    if (!text) return '';
+    
+    // First, escape HTML
+    let escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    // Extract and preserve code blocks (```python ... ```)
+    const codeBlocks = [];
+    escaped = escaped.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)\n```/g, function(match, code) {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre style="background: #0b0e14; border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.9rem; color: #f8f8f2; overflow-x: auto; margin: 1rem 0; text-align: left; line-height: 1.5; font-weight: 400;"><code style="font-family: inherit; white-space: pre;">${code}</code></pre>`);
+        return placeholder;
+    });
+
+    // Replace inline code blocks: `code`
+    escaped = escaped.replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.06); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: \'Consolas\', \'Courier New\', monospace; font-size: 0.9em; color: var(--secondary); font-weight: 500;">$1</code>');
+
+    // Replace newlines with <br> to preserve line breaks
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    // Restore the formatted code blocks
+    codeBlocks.forEach((blockHtml, index) => {
+        escaped = escaped.replace(`__CODE_BLOCK_PLACEHOLDER_${index}__`, blockHtml);
+    });
+
+    return escaped;
 }
 
 function formatMarkdown(text) {
