@@ -2768,7 +2768,7 @@ def submit_assignment(assignment_id):
                     import urllib.request
                     import urllib.parse
                     import json
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
                     prompt = f"Grade this student assignment out of {assign.points} points. \nAssignment Title: {assign.title}\nAssignment Description: {assign.description}\nStudent Submission: {text_content}\nReturn ONLY a JSON block containing 'grade' (number) and 'feedback' (short text)."
                     payload = json.dumps({
                         "contents": [{"parts": [{"text": prompt}]}],
@@ -3384,7 +3384,7 @@ def ai_tutor():
             import urllib.parse
             import json
             
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
             prompt = f"You are a helpful academic tutor. {course_info}Answer the student's question: {message}"
             
             payload = json.dumps({
@@ -3419,7 +3419,7 @@ def query_gemini_json(prompt, fallback_data):
     import urllib.parse
     import json
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
     payload = json.dumps({
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
@@ -4110,7 +4110,7 @@ def self_learning_translate():
     api_key = app.config.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
     if api_key:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
             payload = json.dumps({
                 "contents": [{"parts": [{"text": prompt}]}]
             }).encode('utf-8')
