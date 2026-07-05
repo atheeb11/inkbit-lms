@@ -2775,7 +2775,7 @@ def submit_assignment(assignment_id):
                         "generationConfig": {"responseMimeType": "application/json"}
                     }).encode('utf-8')
                     req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
-                    with urllib.request.urlopen(req, timeout=10) as response:
+                    with urllib.request.urlopen(req, timeout=30) as response:
                         res_data = json.loads(response.read().decode())
                         text_response = res_data['candidates'][0]['content']['parts'][0]['text']
                         parsed = json.loads(text_response)
@@ -3392,7 +3392,7 @@ def ai_tutor():
             }).encode('utf-8')
             
             req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=10) as response:
+            with urllib.request.urlopen(req, timeout=30) as response:
                 res_data = json.loads(response.read().decode())
                 reply = res_data['candidates'][0]['content']['parts'][0]['text']
                 return {'reply': reply}
@@ -3429,7 +3429,7 @@ def query_gemini_json(prompt, fallback_data):
     
     req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
     try:
-        with urllib.request.urlopen(req, timeout=12) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             res_data = json.loads(response.read().decode())
             text = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
             # Handle possible markdown blocks
@@ -4115,7 +4115,7 @@ def self_learning_translate():
                 "contents": [{"parts": [{"text": prompt}]}]
             }).encode('utf-8')
             req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=8) as response:
+            with urllib.request.urlopen(req, timeout=25) as response:
                 res_data = json.loads(response.read().decode())
                 translated = res_data['candidates'][0]['content']['parts'][0]['text'].strip()
         except Exception:
