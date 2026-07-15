@@ -159,6 +159,7 @@ class Question(db.Model):
     option_c = db.Column(db.String(200), nullable=False)
     option_d = db.Column(db.String(200), nullable=False)
     correct_answer = db.Column(db.String(1), nullable=False)  # 'A', 'B', 'C', or 'D'
+    explanation = db.Column(db.Text, nullable=True)
 
 
 class QuizResult(db.Model):
@@ -169,6 +170,7 @@ class QuizResult(db.Model):
     score = db.Column(db.Float, nullable=False)
     total_questions = db.Column(db.Integer, nullable=False)
     submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    answers_json = db.Column(db.Text, nullable=True)  # Stores JSON of student's answers
 
 
 class Progress(db.Model):

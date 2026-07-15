@@ -105,7 +105,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 0;">
+                    <div class="form-group">
                         <label class="form-label">Correct Answer</label>
                         <select name="q-1-correct" class="form-control" style="padding: 0.5rem;" required>
                             <option value="" disabled selected>Select Correct Key</option>
@@ -114,6 +114,11 @@
                             <option value="C">Option C</option>
                             <option value="D">Option D</option>
                         </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Explanation (Optional)</label>
+                        <textarea name="q-1-explanation" class="form-control" placeholder="Provide an explanation for why the correct answer is right..." rows="2" style="padding: 0.5rem 0.75rem; font-family: inherit; resize: vertical;"></textarea>
                     </div>
                 </div>
             </div>
@@ -133,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hiddenCountInput = document.getElementById('question-count-hidden');
     let questionCount = 1;
 
-    function addQuestion(text='', a='', b='', c='', d='', correct='') {
+    function addQuestion(text='', a='', b='', c='', d='', correct='', explanation='') {
         questionCount++;
         hiddenCountInput.value = questionCount;
 
@@ -172,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
+            <div class="form-group">
                 <label class="form-label">Correct Answer</label>
                 <select name="q-${questionCount}-correct" class="form-control" style="padding: 0.5rem;" required>
                     <option value="" disabled ${correct === '' ? 'selected' : ''}>Select Correct Key</option>
@@ -181,6 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="C" ${correct === 'C' ? 'selected' : ''}>Option C</option>
                     <option value="D" ${correct === 'D' ? 'selected' : ''}>Option D</option>
                 </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Explanation (Optional)</label>
+                <textarea name="q-${questionCount}-explanation" class="form-control" placeholder="Provide an explanation for the correct answer..." rows="2" style="padding: 0.5rem 0.75rem; font-family: inherit; resize: vertical;">${escapeHtml(explanation)}</textarea>
             </div>
         `;
         
@@ -237,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hiddenCountInput.value = 0;
                     
                     data.questions.forEach(q => {
-                        addQuestion(q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer);
+                        addQuestion(q.question_text, q.option_a, q.option_b, q.option_c, q.option_d, q.correct_answer, q.explanation || '');
                     });
                     showToast('Quiz generated successfully!', 'success');
                 } else {

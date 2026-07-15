@@ -519,6 +519,21 @@ with app.app_context():
         except Exception:
             db.session.rollback()
 
+    # Quiz System Upgrade migrations
+    try:
+        db.session.execute(text("ALTER TABLE questions ADD COLUMN explanation TEXT DEFAULT NULL"))
+        db.session.commit()
+        print("Migration: Added column explanation to questions table.")
+    except Exception:
+        db.session.rollback()
+
+    try:
+        db.session.execute(text("ALTER TABLE quiz_results ADD COLUMN answers_json TEXT DEFAULT NULL"))
+        db.session.commit()
+        print("Migration: Added column answers_json to quiz_results table.")
+    except Exception:
+        db.session.rollback()
+
     # Re-verify and create tables (e.g. audit_logs)
     db.create_all()
     
@@ -1710,11 +1725,8 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     is_admin = current_user.is_authenticated and current_user.role == 'institution'
+    # Public registration is enabled! Anyone can sign up.
     
-    if not is_admin and not app.config.get('TESTING'):
-        flash("Public registration is disabled. Accounts can only be created by the institution administrator.", "warning")
-        return redirect(url_for('login'))
-        
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip()
@@ -1744,10 +1756,16 @@ def register():
         
         # 5. Validate Registration Number for Students
         if role == 'student' and not registration_number:
-            flash("Registration number is required for students.", "danger")
             if is_admin:
+                flash("Registration number is required for students created by admin.", "danger")
                 return redirect(url_for('index'))
-            return render_template('register.html')
+            else:
+                # Auto-generate unique registration number for public signup
+                import random
+                while True:
+                    registration_number = f"REG-{random.randint(100000, 999999)}"
+                    if not User.query.filter_by(registration_number=registration_number).first():
+                        break
             
         if registration_number:
             existing_reg = User.query.filter_by(registration_number=registration_number).first()
@@ -2695,8 +2713,18 @@ def create_quiz(course_id):
         opt_c = request.form.get(f'q-{i}-c') or ''
         opt_d = request.form.get(f'q-{i}-d') or ''
         correct = request.form.get(f'q-{i}-correct')
+        q_explanation = request.form.get(f'q-{i}-explanation') or ''
         
-        question = Question(quiz_id=quiz.id, question_text=q_text, option_a=opt_a, option_b=opt_b, option_c=opt_c, option_d=opt_d, correct_answer=correct)
+        question = Question(
+            quiz_id=quiz.id, 
+            question_text=q_text, 
+            option_a=opt_a, 
+            option_b=opt_b, 
+            option_c=opt_c, 
+            option_d=opt_d, 
+            correct_answer=correct,
+            explanation=q_explanation
+        )
         db.session.add(question)
         
     db.session.commit()
@@ -2891,7 +2919,7 @@ def submit_quiz(quiz_id):
     score = (correct_count / total_questions * 100) if total_questions > 0 else 100
     
     # Save Quiz Result
-    result = QuizResult(quiz_id=quiz.id, student_id=current_user.id, score=score, total_questions=total_questions)
+    result = QuizResult(quiz_id=quiz.id, student_id=current_user.id, score=score, total_questions=total_questions, answers_json=answers_str)
     db.session.add(result)
     
     # Update progress record
@@ -2938,7 +2966,123 @@ def submit_quiz(quiz_id):
     db.session.commit()
     
     flash(f"Quiz completed! You scored {correct_count}/{total_questions} ({score:.1f}%).", "success")
-    return redirect(url_for('course_detail', course_id=quiz.course_id) + '#quizzes')
+    return redirect(url_for('quiz_review', result_id=result.id))
+
+
+@app.route('/quiz/review/<int:result_id>')
+@login_required
+def quiz_review(result_id):
+    result = QuizResult.query.get_or_404(result_id)
+    quiz = Quiz.query.get(result.quiz_id)
+    if not quiz:
+        flash("Quiz not found.", "danger")
+        return redirect(url_for('index'))
+        
+    # Security check: must be student who submitted it, or the teacher of the course
+    is_teacher = (current_user.role == 'teacher' and quiz.course.teacher_id == current_user.id)
+    is_student = (current_user.role == 'student' and result.student_id == current_user.id)
+    if not (is_teacher or is_student):
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for('index'))
+        
+    # Parse answers_json
+    try:
+        user_answers = json.loads(result.answers_json or '{}')
+    except Exception:
+        user_answers = {}
+        
+    return render_template('quiz_review.html', result=result, quiz=quiz, user_answers=user_answers)
+
+
+@app.route('/api/ai-explain-question', methods=['POST'])
+@login_required
+def ai_explain_question():
+    data = request.json or {}
+    question_id = data.get('question_id')
+    selected_choice = data.get('selected_choice')
+    
+    question = Question.query.get_or_404(question_id)
+    
+    # Prompt Gemini
+    prompt = f"""
+    You are a friendly, expert computer science teacher and tutor. A student is reviewing a quiz question and needs an explanation.
+    
+    Question: {question.question_text}
+    Option A: {question.option_a}
+    Option B: {question.option_b}
+    Option C: {question.option_c}
+    Option D: {question.option_d}
+    Correct Answer: {question.correct_answer}
+    
+    The student selected Option: {selected_choice or "No Selection"}
+    
+    Write a concise, educational, and encouraging response explaining:
+    1. Why Option {question.correct_answer} is the correct answer.
+    2. If the student chose an incorrect option, gently explain the common pitfall or misconception associated with their choice.
+    3. Keep it brief (2-3 short paragraphs), clear, formatted in Markdown, and use bullet points where appropriate to explain steps or rules.
+    """
+    
+    fallback = f"The correct answer is Option {question.correct_answer}. Option A matches the output..."
+    reply = query_gemini_text(prompt, fallback)
+    return {"reply": reply}
+
+
+@app.route('/quiz/stats/<int:quiz_id>')
+@login_required
+def quiz_stats(quiz_id):
+    if current_user.role != 'teacher':
+        flash("Unauthorized", "danger")
+        return redirect(url_for('index'))
+        
+    quiz = Quiz.query.get_or_404(quiz_id)
+    if quiz.course.teacher_id != current_user.id:
+        flash("Unauthorized action.", "danger")
+        return redirect(url_for('index'))
+        
+    results = QuizResult.query.filter_by(quiz_id=quiz.id).order_by(QuizResult.submitted_at.desc()).all()
+    
+    # Calculate stats
+    total_takers = len(results)
+    if total_takers > 0:
+        scores = [r.score for r in results]
+        avg_score = sum(scores) / total_takers
+        high_score = max(scores)
+        low_score = min(scores)
+        pass_rate = len([s for s in scores if s >= 60.0]) / total_takers * 100
+    else:
+        avg_score, high_score, low_score, pass_rate = 0, 0, 0, 0
+        
+    # Calculate question analysis (distractor percentage breakdown)
+    # Store distractor counts for each question: {question_id: {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'total': 0}}
+    question_stats = {}
+    for q in quiz.questions:
+        question_stats[q.id] = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'total': 0}
+        
+    for r in results:
+        try:
+            ans_map = json.loads(r.answers_json or '{}')
+        except Exception:
+            ans_map = {}
+        for q_id_str, val in ans_map.items():
+            try:
+                q_id = int(q_id_str)
+            except ValueError:
+                continue
+            if q_id in question_stats and val in ['A', 'B', 'C', 'D']:
+                question_stats[q_id][val] += 1
+                question_stats[q_id]['total'] += 1
+                
+    # Normalize stats to percentages
+    for q_id, stats in question_stats.items():
+        total = stats['total']
+        if total > 0:
+            for opt in ['A', 'B', 'C', 'D']:
+                stats[opt + '_pct'] = (stats[opt] / total) * 100
+        else:
+            for opt in ['A', 'B', 'C', 'D']:
+                stats[opt + '_pct'] = 0.0
+                
+    return render_template('quiz_stats.html', quiz=quiz, results=results, total_takers=total_takers, avg_score=avg_score, high_score=high_score, low_score=low_score, pass_rate=pass_rate, question_stats=question_stats)
 
 
 # Contact Form Telegram Submission Route
@@ -3409,6 +3553,29 @@ def ai_tutor():
         return {'reply': f"I ran into an issue connecting to the AI brain. Error: {str(e)}"}
 
 
+def query_gemini_text(prompt, fallback_text):
+    api_key = app.config.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
+    if not api_key:
+        return fallback_text
+        
+    import urllib.request
+    import urllib.parse
+    import json
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    payload = json.dumps({
+        "contents": [{"parts": [{"text": prompt}]}]
+    }).encode('utf-8')
+    
+    req = urllib.request.Request(url, data=payload, headers={'Content-Type': 'application/json'})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            res_data = json.loads(response.read().decode())
+            return res_data['candidates'][0]['content']['parts'][0]['text'].strip()
+    except Exception as e:
+        print(f"Error querying Gemini text: {e}")
+        return fallback_text
+
 
 def query_gemini_json(prompt, fallback_data):
     api_key = app.config.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
@@ -3559,7 +3726,8 @@ def ai_generate_quiz():
           "option_b": "Choice B",
           "option_c": "Choice C",
           "option_d": "Choice D",
-          "correct_answer": "A"
+          "correct_answer": "A",
+          "explanation": "Detailed explanation explaining why the correct choice is right and explaining core concepts."
         }}
       ]
     }}
@@ -3576,7 +3744,8 @@ def ai_generate_quiz():
             "option_b": f"Core concept option B for #{idx}" if ans_key == 'B' else "Incorrect choice B",
             "option_c": f"Core concept option C for #{idx}" if ans_key == 'C' else "Incorrect choice C",
             "option_d": f"Core concept option D for #{idx}" if ans_key == 'D' else "Incorrect choice D",
-            "correct_answer": ans_key
+            "correct_answer": ans_key,
+            "explanation": f"Explanation for question #{idx} focusing on {topic}."
         })
         
     fallback = {
@@ -3873,12 +4042,8 @@ def self_learning_ai_tutor():
     Student Question: {message}
     """
     
-    fallback = {
-        "reply": f"Hello! As your AI tutor for {course.name if course else 'general study'}, I recommend reading the syllabus and notes. Let's do our best! What specific part of {message} can I clarify?"
-    }
-    
-    res = query_gemini_json(f"Return a JSON object with a single 'reply' key containing the response. Prompt: {prompt}", fallback)
-    reply = res.get('reply', fallback['reply'])
+    fallback = f"Hello! As your AI tutor for {course.name if course else 'general study'}, I recommend reading the syllabus and notes. Let's do our best! What specific part of {message} can I clarify?"
+    reply = query_gemini_text(prompt, fallback)
     
     # Award XP points & check badges
     current_user.xp_points += 15

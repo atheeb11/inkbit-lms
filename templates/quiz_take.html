@@ -3,84 +3,337 @@
 {% block title %}Take Quiz: {{ quiz.title }} - INKBIT LMS{% endblock %}
 
 {% block content %}
+<style>
+    /* Quiz Taker Premium CSS overrides/additions */
+    .quiz-layout-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        align-items: start;
+        margin-top: 1rem;
+    }
+    
+    @media (min-width: 992px) {
+        .quiz-layout-grid {
+            grid-template-columns: 3fr 1fr;
+        }
+    }
+    
+    .question-nav-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .nav-badge {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+    }
+    
+    .nav-badge:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--text-muted);
+        transform: translateY(-2px);
+    }
+    
+    .nav-badge.active {
+        border-color: var(--primary);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+        background: rgba(139, 92, 246, 0.1);
+        color: var(--primary-light);
+    }
+    
+    .nav-badge.answered {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(29, 78, 216, 0.15) 100%);
+        border-color: #2563eb;
+        color: #93c5fd;
+    }
+    
+    .nav-badge.flagged {
+        position: relative;
+        background: rgba(245, 158, 11, 0.1) !important;
+        border-color: #f59e0b !important;
+        color: #fde047 !important;
+    }
+    
+    .nav-badge.flagged::after {
+        content: '🚩';
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        font-size: 0.55rem;
+    }
+    
+    .quiz-option-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 0.75rem;
+        user-select: none;
+    }
+    
+    .quiz-option-card:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--text-muted);
+        transform: translateX(4px);
+    }
+    
+    .quiz-option-card.selected {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+        border-color: var(--primary);
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.1);
+    }
+    
+    .quiz-option-card.selected .option-prefix {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .option-prefix {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        background: rgba(0, 0, 0, 0.2);
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+    
+    .legend-box {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Modal Styling */
+    .custom-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    .custom-modal-backdrop.show {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .custom-modal {
+        background: #0f172a;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        border-radius: 16px;
+        width: 90%;
+        max-width: 450px;
+        padding: 2rem;
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .custom-modal-backdrop.show .custom-modal {
+        transform: scale(1);
+    }
+</style>
+
 <div class="quiz-taker-container">
-    <div style="margin-bottom: 1.5rem;">
-        <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
-            Course Quiz
-        </span>
-        <h2>{{ quiz.title }}</h2>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ quiz.description or 'Please read each question carefully and select the best option.' }}</p>
-    </div>
-
-    <!-- Quiz Header with Timer & Progress -->
-    <div class="glass-card" style="padding: 1.5rem; margin-bottom: 1.5rem;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">
-                Quiz Progress
+    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="font-size: 0.75rem; color: var(--secondary); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">
+                Quiz Assessment
             </span>
-            <!-- Countdown Timer Widget -->
-            <div class="quiz-timer" id="quiz-timer-bar" data-duration="300">
-                <svg class="feather" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                Time Left: <span id="timer-count">5:00</span>
-            </div>
+            <h2>{{ quiz.title }}</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                {{ quiz.description or 'Evaluate your comprehension on this concept.' }}
+            </p>
         </div>
-        <div class="quiz-progress-bar">
-            <div class="quiz-progress-fill"></div>
+        
+        <!-- Timer Header Widget -->
+        <div class="glass-card" style="padding: 0.5rem 1rem; border-radius: 10px; display: inline-flex; align-items: center; gap: 0.5rem; border-color: rgba(255,255,255,0.06); background: rgba(0,0,0,0.15);" id="quiz-timer-bar" data-duration="300">
+            <svg class="feather" style="width:18px; height:18px; color: var(--primary);" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Time Remaining:</span>
+            <span id="timer-count" style="font-family: monospace; font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">5:00</span>
         </div>
     </div>
 
-    <!-- Form container -->
-    <form id="quiz-submit-form" action="{{ url_for('submit_quiz', quiz_id=quiz.id) }}" method="POST">
-        <!-- Hidden input to store chosen answers: {"question_id": "choice"} -->
-        <input type="hidden" name="answers" id="quiz-answers-input" value="{}">
-
-        <!-- Question Slides -->
-        {% for q in quiz.questions %}
-            <div class="glass-card question-slide" data-question-id="{{ q.id }}" style="display: none;">
-                <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
-                    Question {{ loop.index }} of {{ quiz.questions | length }}
-                </div>
-                <div class="quiz-question-text" style="font-size: 1.2rem; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.4; color: var(--text-primary);">{{ q.question_text }}</div>
+    <!-- Main quiz layout -->
+    <div class="quiz-layout-grid">
+        
+        <!-- Question slide container -->
+        <div class="quiz-questions-panel">
+            <form id="quiz-submit-form" action="{{ url_for('submit_quiz', quiz_id=quiz.id) }}" method="POST">
+                <input type="hidden" name="answers" id="quiz-answers-input" value="{}">
                 
-                <div class="quiz-options">
-                    <div class="quiz-option-card" data-choice="A">
-                        <div class="option-prefix">A</div>
-                        <div class="option-text">{{ q.option_a }}</div>
+                {% for q in quiz.questions %}
+                    <div class="glass-card question-slide" data-question-id="{{ q.id }}" style="display: none; padding: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <span style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px;">
+                                Question {{ loop.index }} of {{ quiz.questions | length }}
+                            </span>
+                            
+                            <button type="button" class="btn btn-secondary flag-toggle-btn" data-question-id="{{ q.id }}" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <svg class="feather" style="width:12px; height:12px;" viewBox="0 0 24 24"><polygon points="6 2 18 12 6 22 6 2"></polygon></svg>
+                                <span class="flag-text">Flag for Review</span>
+                            </button>
+                        </div>
+                        
+                        <div class="quiz-question-text" style="font-size: 1.15rem; font-weight: 600; margin-bottom: 1.5rem; line-height: 1.4; color: var(--text-primary);">{{ q.question_text }}</div>
+                        
+                        <div class="quiz-options">
+                            <div class="quiz-option-card" data-choice="A">
+                                <div class="option-prefix">A</div>
+                                <div class="option-text">{{ q.option_a }}</div>
+                                <span style="margin-left: auto; font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">[Key: A]</span>
+                            </div>
+                            
+                            <div class="quiz-option-card" data-choice="B">
+                                <div class="option-prefix">B</div>
+                                <div class="option-text">{{ q.option_b }}</div>
+                                <span style="margin-left: auto; font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">[Key: B]</span>
+                            </div>
+                            
+                            {% if q.option_c %}
+                            <div class="quiz-option-card" data-choice="C">
+                                <div class="option-prefix">C</div>
+                                <div class="option-text">{{ q.option_c }}</div>
+                                <span style="margin-left: auto; font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">[Key: C]</span>
+                            </div>
+                            {% endif %}
+                            
+                            {% if q.option_d %}
+                            <div class="quiz-option-card" data-choice="D">
+                                <div class="option-prefix">D</div>
+                                <div class="option-text">{{ q.option_d }}</div>
+                                <span style="margin-left: auto; font-size: 0.65rem; color: var(--text-muted); font-weight: 600;">[Key: D]</span>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="quiz-option-card" data-choice="B">
-                        <div class="option-prefix">B</div>
-                        <div class="option-text">{{ q.option_b }}</div>
-                    </div>
-                    {% if q.option_c %}
-                    <div class="quiz-option-card" data-choice="C">
-                        <div class="option-prefix">C</div>
-                        <div class="option-text">{{ q.option_c }}</div>
-                    </div>
-                    {% endif %}
-                    {% if q.option_d %}
-                    <div class="quiz-option-card" data-choice="D">
-                        <div class="option-prefix">D</div>
-                        <div class="option-text">{{ q.option_d }}</div>
-                    </div>
-                    {% endif %}
+                {% endfor %}
+                
+                <!-- Nav Action Bar -->
+                <div class="glass-card" style="padding: 1.25rem; margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; border-color: rgba(255,255,255,0.04);">
+                    <button type="button" class="btn btn-secondary" id="prev-question-btn" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        <svg class="feather" style="width: 16px; height: 16px;" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        Previous
+                    </button>
+                    
+                    <button type="button" class="btn btn-primary" id="next-question-btn" style="padding: 0.5rem 1.25rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        Next Question
+                        <svg class="feather" style="width: 16px; height: 16px;" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
                 </div>
-            </div>
-        {% endfor %}
-
-        <!-- Navigation Buttons -->
-        <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
-            <button type="button" class="btn btn-secondary" id="prev-question-btn" style="display: none;">
-                <svg class="feather" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                Previous
-            </button>
-            <div style="margin-left: auto;">
-                <button type="button" class="btn btn-primary" id="next-question-btn">
-                    Next Question
-                    <svg class="feather" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </form>
+        </div>
+        
+        <!-- Sidebar Navigation Map -->
+        <div class="quiz-sidebar-panel">
+            <div class="glass-card" style="padding: 1.25rem;">
+                <h4 style="font-size: 0.95rem; margin-top: 0;">Navigation Panel</h4>
+                <div class="question-nav-grid" id="nav-badge-container">
+                    <!-- Badges will be generated dynamically by JS -->
+                </div>
+                
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">
+                
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.25rem;">
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: rgba(255, 255, 255, 0.04);"></div>
+                        <span>Unanswered</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: rgba(37, 99, 235, 0.15); border-color: #2563eb;"></div>
+                        <span>Answered</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-box" style="background: rgba(245, 158, 11, 0.1); border-color: #f59e0b;"></div>
+                        <span>Flagged for Review</span>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary" id="trigger-submit-modal" style="width: 100%; padding: 0.6rem; font-size: 0.85rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; font-weight: 700;">
+                    Submit Assessment
                 </button>
             </div>
         </div>
-    </form>
+    </div>
+</div>
+
+<!-- Custom Submit Confirmation Modal -->
+<div class="custom-modal-backdrop" id="submit-confirm-modal">
+    <div class="custom-modal">
+        <h3 style="margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+            📝 Submit Answers?
+        </h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4;">
+            Are you sure you want to finish the quiz? Please review your status breakdown below:
+        </p>
+        
+        <div style="background: rgba(0,0,0,0.25); border-radius: 8px; padding: 1rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-secondary);">Total Questions:</span>
+                <strong id="modal-total-count">0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #60a5fa;">Answered Questions:</span>
+                <strong id="modal-answered-count" style="color: #60a5fa;">0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #fb7185;">Unanswered Questions:</span>
+                <strong id="modal-unanswered-count" style="color: #fb7185;">0</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #fde047;">Flagged for Review:</span>
+                <strong id="modal-flagged-count" style="color: #fde047;">0</strong>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" id="modal-cancel-btn" style="padding: 0.45rem 1rem; font-size: 0.85rem;">
+                Back to Quiz
+            </button>
+            <button type="button" class="btn btn-primary" id="modal-confirm-btn" style="padding: 0.45rem 1.25rem; font-size: 0.85rem; background: #10b981; border-color: #10b981;">
+                Confirm Submit
+            </button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Review: {{ quiz.title }} - INKBIT LMS{% endblock %}
+
+{% block content %}
+<style>
+    .review-summary-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+        .review-summary-grid {
+            grid-template-columns: 1fr 2fr;
+        }
+    }
+    
+    .score-radial {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        text-align: center;
+    }
+    
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        border: 8px solid;
+    }
+    
+    .score-pass {
+        border-color: #10b981;
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .score-fail {
+        border-color: #ef4444;
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+    
+    .question-review-card {
+        margin-bottom: 1.5rem;
+        border-left: 5px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .question-review-card.correct {
+        border-left-color: #10b981;
+    }
+    
+    .question-review-card.incorrect {
+        border-left-color: #ef4444;
+    }
+    
+    .option-review-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.85rem 1.25rem;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        background: rgba(255, 255, 255, 0.01);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .option-review-item.correct-answer {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.05);
+    }
+    
+    .option-review-item.incorrect-selected {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.05);
+    }
+    
+    .explanation-box {
+        margin-top: 1.25rem;
+        padding: 1.25rem;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        border-left: 3px solid var(--secondary);
+    }
+    
+    .ai-explanation-box {
+        margin-top: 1rem;
+        padding: 1.25rem;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.05) 0%, rgba(37, 99, 235, 0.05) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        display: none;
+    }
+</style>
+
+<div class="quiz-review-container" style="max-width: 900px; margin: 0 auto;">
+    
+    <!-- Header Navigation -->
+    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <a href="{{ url_for('course_detail', course_id=quiz.course_id) }}#quizzes" style="color: var(--secondary); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+                <svg class="feather" style="width: 16px; height: 16px;" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Return to Course Page
+            </a>
+            <h1 style="margin-top: 0.5rem;">Quiz Performance Review</h1>
+            <p style="color: var(--text-secondary); margin-top: -0.25rem;">Quiz: {{ quiz.title }}</p>
+        </div>
+    </div>
+    
+    <!-- Summary Panel -->
+    <div class="review-summary-grid">
+        <div class="score-radial">
+            {% set passed = result.score >= 60.0 %}
+            <div class="score-circle {{ 'score-pass' if passed else 'score-fail' }}">
+                {{ "%.0f"|format(result.score) }}%
+            </div>
+            <h3 style="margin: 0;">{{ 'Passed Assessment' if passed else 'Failed Assessment' }}</h3>
+            <span style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; display: block;">
+                Passing score: 60%
+            </span>
+        </div>
+        
+        <div class="glass-card" style="display: flex; flex-direction: column; justify-content: center; padding: 2rem;">
+            <h3 style="margin-top: 0; color: var(--secondary);">Results Summary</h3>
+            <div class="responsive-grid-1-1" style="gap: 1rem; margin-top: 0.5rem; font-size: 0.95rem;">
+                <div>
+                    <span style="color: var(--text-secondary); display: block;">Correct Questions</span>
+                    <strong style="font-size: 1.15rem; color: var(--text-primary);">
+                        {{ (result.score / 100 * result.total_questions) | int }} / {{ result.total_questions }}
+                    </strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary); display: block;">Submission Date</span>
+                    <strong style="font-size: 1.15rem; color: var(--text-primary);">
+                        {{ result.submitted_at.strftime('%d %b %Y, %H:%M') }} UTC
+                    </strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary); display: block;">Points Awarded</span>
+                    <strong style="font-size: 1.15rem; color: var(--success);">
+                        +100 XP
+                    </strong>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary); display: block;">Status</span>
+                    <span class="badge {{ 'badge-success' if passed else 'badge-danger' }}" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                        {{ 'PASS' if passed else 'FAIL' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Question reviews -->
+    <h2 style="margin-bottom: 1.5rem;">Question Breakdown</h2>
+    
+    {% for q in quiz.questions %}
+        {% set user_choice = user_answers.get(q.id|string) %}
+        {% set is_correct = (user_choice|upper == q.correct_answer|upper) %}
+        
+        <div class="glass-card question-review-card {{ 'correct' if is_correct else 'incorrect' }}" style="padding: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: {{ '#10b981' if is_correct else '#ef4444' }}">
+                    Question {{ loop.index }} — {{ 'Correct' if is_correct else 'Incorrect' }}
+                </span>
+                
+                <span class="badge {{ 'badge-success' if is_correct else 'badge-danger' }}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
+                    {{ '+100 XP' if is_correct else '0 XP' }}
+                </span>
+            </div>
+            
+            <div class="quiz-question-text" style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1.25rem; line-height: 1.4; color: var(--text-primary);">{{ q.question_text }}</div>
+            
+            <div class="quiz-options" style="margin-bottom: 1.25rem;">
+                <!-- Option A -->
+                <div class="option-review-item {{ 'correct-answer' if q.correct_answer == 'A' else ('incorrect-selected' if user_choice == 'A') }}">
+                    <div class="option-prefix" style="{{ 'background: #10b981; border-color: #10b981; color: white;' if q.correct_answer == 'A' else ('background: #ef4444; border-color: #ef4444; color: white;' if user_choice == 'A') }}">A</div>
+                    <div style="flex: 1;">{{ q.option_a }}</div>
+                    {% if q.correct_answer == 'A' %}
+                        <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">✓ Correct Answer</span>
+                    {% elif user_choice == 'A' %}
+                        <span style="font-size: 0.75rem; color: #ef4444; font-weight: 700;">✗ Your Choice</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Option B -->
+                <div class="option-review-item {{ 'correct-answer' if q.correct_answer == 'B' else ('incorrect-selected' if user_choice == 'B') }}">
+                    <div class="option-prefix" style="{{ 'background: #10b981; border-color: #10b981; color: white;' if q.correct_answer == 'B' else ('background: #ef4444; border-color: #ef4444; color: white;' if user_choice == 'B') }}">B</div>
+                    <div style="flex: 1;">{{ q.option_b }}</div>
+                    {% if q.correct_answer == 'B' %}
+                        <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">✓ Correct Answer</span>
+                    {% elif user_choice == 'B' %}
+                        <span style="font-size: 0.75rem; color: #ef4444; font-weight: 700;">✗ Your Choice</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Option C -->
+                {% if q.option_c %}
+                <div class="option-review-item {{ 'correct-answer' if q.correct_answer == 'C' else ('incorrect-selected' if user_choice == 'C') }}">
+                    <div class="option-prefix" style="{{ 'background: #10b981; border-color: #10b981; color: white;' if q.correct_answer == 'C' else ('background: #ef4444; border-color: #ef4444; color: white;' if user_choice == 'C') }}">C</div>
+                    <div style="flex: 1;">{{ q.option_c }}</div>
+                    {% if q.correct_answer == 'C' %}
+                        <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">✓ Correct Answer</span>
+                    {% elif user_choice == 'C' %}
+                        <span style="font-size: 0.75rem; color: #ef4444; font-weight: 700;">✗ Your Choice</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Option D -->
+                {% if q.option_d %}
+                <div class="option-review-item {{ 'correct-answer' if q.correct_answer == 'D' else ('incorrect-selected' if user_choice == 'D') }}">
+                    <div class="option-prefix" style="{{ 'background: #10b981; border-color: #10b981; color: white;' if q.correct_answer == 'D' else ('background: #ef4444; border-color: #ef4444; color: white;' if user_choice == 'D') }}">D</div>
+                    <div style="flex: 1;">{{ q.option_d }}</div>
+                    {% if q.correct_answer == 'D' %}
+                        <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">✓ Correct Answer</span>
+                    {% elif user_choice == 'D' %}
+                        <span style="font-size: 0.75rem; color: #ef4444; font-weight: 700;">✗ Your Choice</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Standard tutor explanation -->
+            {% if q.explanation %}
+                <div class="explanation-box">
+                    <strong style="color: var(--secondary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.25rem;">
+                        Tutor Explanation
+                    </strong>
+                    <p style="margin: 0; font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary);">
+                        {{ q.explanation }}
+                    </p>
+                </div>
+            {% endif %}
+            
+            <!-- Gemini Explainer Actions -->
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                <button type="button" class="btn btn-secondary ai-explain-btn" data-question-id="{{ q.id }}" data-selected-choice="{{ user_choice or '' }}" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; border-color: rgba(139, 92, 246, 0.3); border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <span>🤖 Ask Gemini AI Tutor</span>
+                </button>
+            </div>
+            
+            <!-- AI Explanation Container -->
+            <div class="ai-explanation-box" id="ai-exp-box-{{ q.id }}">
+                <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1rem;">✨</span>
+                    <strong style="color: var(--primary-light); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">Gemini AI Explanation</strong>
+                </div>
+                <div class="ai-explanation-content" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-secondary);">
+                    Generating explanation...
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Format code blocks inside questions
+    document.querySelectorAll('.quiz-question-text').forEach(el => {
+        el.innerHTML = formatQuestionText(el.textContent);
+    });
+    
+    // 2. Setup AI Explainer Buttons
+    document.querySelectorAll('.ai-explain-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const questionId = btn.getAttribute('data-question-id');
+            const selectedChoice = btn.getAttribute('data-selected-choice');
+            const expBox = document.getElementById(`ai-exp-box-${questionId}`);
+            const expContent = expBox.querySelector('.ai-explanation-content');
+            
+            expBox.style.display = 'block';
+            expContent.innerHTML = '<span style="color: var(--text-muted);">🤖 Consultando Gemini AI Tutor...</span>';
+            btn.disabled = true;
+            
+            fetch('/api/ai-explain-question', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question_id: questionId, selected_choice: selectedChoice })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.reply) {
+                    // Quick parser for markdown bolding and bullet points to render nicely
+                    expContent.innerHTML = formatMarkdown(data.reply);
+                } else {
+                    expContent.textContent = 'Failed to load explanation from Gemini.';
+                }
+            })
+            .catch(err => {
+                expContent.textContent = 'Failed to contact Gemini Tutor API.';
+            })
+            .finally(() => {
+                btn.disabled = false;
+            });
+        });
+    });
+});
+
+function formatMarkdown(text) {
+    if (!text) return '';
+    let formatted = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+        
+    // Replace **bold** with <strong>bold</strong>
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Replace `code` with styled code tag
+    formatted = formatted.replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.06); padding: 0.1rem 0.3rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: var(--secondary);">$1</code>');
+    
+    // Replace bullet points: "* Item" or "- Item" with a bullet item
+    formatted = formatted.replace(/^(?:\*|-)\s+(.*?)$/gm, '<li style="margin-left: 1rem; margin-bottom: 0.25rem;">$1</li>');
+    
+    // Wrap lists in ul
+    formatted = formatted.replace(/((?:<li.*?>.*?<\/li>\s*)+)/g, '<ul style="margin: 0.5rem 0; padding-left: 0.5rem;">$1</ul>');
+    
+    // Replace double newlines with spacing
+    formatted = formatted.replace(/\n\n/g, '<div style="margin-bottom: 0.75rem;"></div>');
+    formatted = formatted.replace(/\n/g, '<br>');
+    
+    return formatted;
+}
+
+function formatQuestionText(text) {
+    if (!text) return '';
+    
+    let escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const codeBlocks = [];
+    escaped = escaped.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)\n```/g, function(match, code) {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre style="background: #0b0e14; border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.9rem; color: #f8f8f2; overflow-x: auto; margin: 1rem 0; text-align: left; line-height: 1.5; font-weight: 400;"><code style="font-family: inherit; white-space: pre;">${code}</code></pre>`);
+        return placeholder;
+    });
+
+    escaped = escaped.replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.06); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: \'Consolas\', \'Courier New\', monospace; font-size: 0.9em; color: var(--secondary); font-weight: 500;">$1</code>');
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    codeBlocks.forEach((blockHtml, index) => {
+        escaped = escaped.replace(`__CODE_BLOCK_PLACEHOLDER_${index}__`, blockHtml);
+    });
+
+    return escaped;
+}
+</script>
+{% endblock %}

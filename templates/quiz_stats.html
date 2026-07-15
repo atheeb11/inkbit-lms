@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Statistics: {{ quiz.title }} - INKBIT LMS{% endblock %}
+
+{% block content %}
+<style>
+    .stats-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-micro {
+        padding: 1.5rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .stat-card-micro .label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-card-micro .value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-top: 0.25rem;
+        color: var(--text-primary);
+    }
+    
+    .question-analysis-card {
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+    
+    .distractor-bar-container {
+        margin-bottom: 0.75rem;
+    }
+    
+    .distractor-label-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+        color: var(--text-secondary);
+    }
+    
+    .distractor-bar-bg {
+        height: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.02);
+    }
+    
+    .distractor-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .distractor-correct {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+    
+    .distractor-incorrect {
+        background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    }
+</style>
+
+<div class="quiz-stats-container">
+    
+    <!-- Header -->
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('course_detail', course_id=quiz.course_id) }}#quizzes" style="color: var(--secondary); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.25rem;">
+            <svg class="feather" style="width: 16px; height: 16px;" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Return to Course Page
+        </a>
+        <h1 style="margin-top: 0.5rem;">Quiz Stats & Grades</h1>
+        <p style="color: var(--text-secondary); margin-top: -0.25rem;">Quiz: {{ quiz.title }} | Course: {{ quiz.course.name }}</p>
+    </div>
+    
+    <!-- Stats Row -->
+    <div class="stats-summary-grid">
+        <div class="stat-card-micro">
+            <span class="label">Total Takers</span>
+            <span class="value">{{ total_takers }}</span>
+        </div>
+        <div class="stat-card-micro">
+            <span class="label">Average Score</span>
+            <span class="value">{{ "%.1f"|format(avg_score) }}%</span>
+        </div>
+        <div class="stat-card-micro">
+            <span class="label">Highest Score</span>
+            <span class="value" style="color: var(--success);">{{ "%.1f"|format(high_score) }}%</span>
+        </div>
+        <div class="stat-card-micro">
+            <span class="label">Lowest Score</span>
+            <span class="value" style="color: var(--danger);">{{ "%.1f"|format(low_score) }}%</span>
+        </div>
+        <div class="stat-card-micro">
+            <span class="label">Passing Rate (>=60%)</span>
+            <span class="value">{{ "%.1f"|format(pass_rate) }}%</span>
+        </div>
+    </div>
+    
+    <div class="responsive-grid-2-1" style="align-items: start; gap: 1.5rem;">
+        
+        <!-- Left Panel: Submissions list -->
+        <div class="glass-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                <h3 style="margin: 0;">Student Submissions</h3>
+                <input type="text" id="student-search" class="form-control" placeholder="Search by student name or email..." style="width: 250px; padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+            </div>
+            
+            {% if results %}
+                <div class="table-responsive">
+                    <table class="table" style="font-size: 0.9rem;">
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Email</th>
+                                <th style="text-align: center;">Score</th>
+                                <th style="text-align: center;">Correct</th>
+                                <th>Submitted Date</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="submissions-table-body">
+                            {% for r in results %}
+                                <tr class="submission-row" data-name="{{ r.student.name.lower() }}" data-email="{{ r.student.email.lower() }}">
+                                    <td><strong>{{ r.student.name }}</strong></td>
+                                    <td style="color: var(--text-secondary);">{{ r.student.email }}</td>
+                                    <td style="text-align: center;">
+                                        {% set passed = r.score >= 60.0 %}
+                                        <span class="badge {{ 'badge-success' if passed else 'badge-danger' }}" style="font-weight: 700;">
+                                            {{ "%.0f"|format(r.score) }}%
+                                        </span>
+                                    </td>
+                                    <td style="text-align: center; color: var(--text-secondary);">
+                                        {{ (r.score / 100 * r.total_questions) | int }} / {{ r.total_questions }}
+                                    </td>
+                                    <td style="color: var(--text-muted); font-size: 0.8rem;">
+                                        {{ r.submitted_at.strftime('%d %b %Y, %H:%M') }} UTC
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <a href="{{ url_for('quiz_review', result_id=r.id) }}" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 4px;">
+                                            View Attempt
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem 0; margin: 0;">
+                    No submissions recorded yet for this quiz.
+                </p>
+            {% endif %}
+        </div>
+        
+        <!-- Right Panel: Distractor & Difficulty Analysis -->
+        <div class="glass-card">
+            <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Concept Analytics</h3>
+            
+            {% for q in quiz.questions %}
+                {% set q_stats = question_stats[q.id] %}
+                {% set correct_pct = q_stats[q.correct_answer + '_pct'] %}
+                
+                <div class="question-analysis-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: var(--secondary); text-transform: uppercase;">
+                            Question #{{ loop.index }}
+                        </span>
+                        
+                        <!-- Difficulty Badge -->
+                        {% if total_takers > 0 %}
+                            {% if correct_pct < 50.0 %}
+                                <span class="badge badge-danger" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">High Difficulty ⚠️</span>
+                            {% elif correct_pct < 80.0 %}
+                                <span class="badge badge-warning" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">Medium Difficulty 📊</span>
+                            {% else %}
+                                <span class="badge badge-success" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">Easy Concept ✅</span>
+                            {% endif %}
+                        {% else %}
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">No data</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="quiz-question-text" style="font-size: 0.95rem; font-weight: 600; line-height: 1.4; color: var(--text-primary); margin-bottom: 1rem;">
+                        {{ q.question_text }}
+                    </div>
+                    
+                    <!-- Distractor breakdowns -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <!-- Option A -->
+                        <div class="distractor-bar-container">
+                            <div class="distractor-label-row">
+                                <span>A. {{ q.option_a[:40] }}{{ '...' if q.option_a|length > 40 }}</span>
+                                <strong>{{ "%.0f"|format(q_stats['A_pct']) }}% ({{ q_stats['A'] }})</strong>
+                            </div>
+                            <div class="distractor-bar-bg">
+                                <div class="distractor-bar-fill {{ 'distractor-correct' if q.correct_answer == 'A' else 'distractor-incorrect' }}" style="width: {{ q_stats['A_pct'] }}%;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Option B -->
+                        <div class="distractor-bar-container">
+                            <div class="distractor-label-row">
+                                <span>B. {{ q.option_b[:40] }}{{ '...' if q.option_b|length > 40 }}</span>
+                                <strong>{{ "%.0f"|format(q_stats['B_pct']) }}% ({{ q_stats['B'] }})</strong>
+                            </div>
+                            <div class="distractor-bar-bg">
+                                <div class="distractor-bar-fill {{ 'distractor-correct' if q.correct_answer == 'B' else 'distractor-incorrect' }}" style="width: {{ q_stats['B_pct'] }}%;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Option C -->
+                        {% if q.option_c %}
+                        <div class="distractor-bar-container">
+                            <div class="distractor-label-row">
+                                <span>C. {{ q.option_c[:40] }}{{ '...' if q.option_c|length > 40 }}</span>
+                                <strong>{{ "%.0f"|format(q_stats['C_pct']) }}% ({{ q_stats['C'] }})</strong>
+                            </div>
+                            <div class="distractor-bar-bg">
+                                <div class="distractor-bar-fill {{ 'distractor-correct' if q.correct_answer == 'C' else 'distractor-incorrect' }}" style="width: {{ q_stats['C_pct'] }}%;"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Option D -->
+                        {% if q.option_d %}
+                        <div class="distractor-bar-container">
+                            <div class="distractor-label-row">
+                                <span>D. {{ q.option_d[:40] }}{{ '...' if q.option_d|length > 40 }}</span>
+                                <strong>{{ "%.0f"|format(q_stats['D_pct']) }}% ({{ q_stats['D'] }})</strong>
+                            </div>
+                            <div class="distractor-bar-bg">
+                                <div class="distractor-bar-fill {{ 'distractor-correct' if q.correct_answer == 'D' else 'distractor-incorrect' }}" style="width: {{ q_stats['D_pct'] }}%;"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Search filter logic
+    const searchInput = document.getElementById('student-search');
+    const tableRows = document.querySelectorAll('.submission-row');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            tableRows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                const email = row.getAttribute('data-email');
+                
+                if (name.includes(query) || email.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    
+    // 2. Format question texts with code block parser
+    document.querySelectorAll('.quiz-question-text').forEach(el => {
+        el.innerHTML = formatQuestionText(el.textContent);
+    });
+});
+
+function formatQuestionText(text) {
+    if (!text) return '';
+    
+    let escaped = text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    const codeBlocks = [];
+    escaped = escaped.replace(/```(?:[a-zA-Z0-9]+)?\n([\s\S]*?)\n```/g, function(match, code) {
+        const placeholder = `__CODE_BLOCK_PLACEHOLDER_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre style="background: #0b0e14; border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 0.9rem; color: #f8f8f2; overflow-x: auto; margin: 1rem 0; text-align: left; line-height: 1.5; font-weight: 400;"><code style="font-family: inherit; white-space: pre;">${code}</code></pre>`);
+        return placeholder;
+    });
+
+    escaped = escaped.replace(/`(.*?)`/g, '<code style="background: rgba(255,255,255,0.06); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: \'Consolas\', \'Courier New\', monospace; font-size: 0.9em; color: var(--secondary); font-weight: 500;">$1</code>');
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    codeBlocks.forEach((blockHtml, index) => {
+        escaped = escaped.replace(`__CODE_BLOCK_PLACEHOLDER_${index}__`, blockHtml);
+    });
+
+    return escaped;
+}
+</script>
+{% endblock %}

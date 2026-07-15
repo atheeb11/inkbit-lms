@@ -126,17 +126,14 @@ class TestMockupDashboards(unittest.TestCase):
 
     def test_admin_user_management(self):
         print("\nTesting Admin User Management...")
-        # 1. Attempt public registration (should redirect since TESTING is bypassed or set to redirect)
-        # Note: in register route, we check:
-        # `if not is_admin and not app.config.get('TESTING'):`
-        # Let's temporarily disable the TESTING override for registration in our test to verify the live block:
+        # 1. Attempt public registration (should succeed with 200 OK since public registration is now enabled)
         from app import app, db
         from models import User
         original_testing = app.config['TESTING']
         app.config['TESTING'] = False
         try:
             res = self.client.get('/register')
-            self.assertEqual(res.status_code, 302) # Redirect to login
+            self.assertEqual(res.status_code, 200) # Should render register page successfully
         finally:
             app.config['TESTING'] = original_testing
             
@@ -198,6 +195,14 @@ class TestMockupDashboards(unittest.TestCase):
 
     def test_first_login_password_change(self):
         print("\nTesting First Login Password Change & 2FA Bypass...")
+        from app import app, db
+        from models import User
+        
+        # Clean up any leftover tutor from previous runs
+        with app.app_context():
+            User.query.filter_by(email='new_tutor@inkbit.com').delete()
+            db.session.commit()
+            
         # 1. Login as Admin/Institution to create a tutor
         self.client.post('/login', data={
             'email': 'institution@inkbit.com',
@@ -205,8 +210,6 @@ class TestMockupDashboards(unittest.TestCase):
         })
         
         # 2. Register a new teacher/tutor
-        from app import app, db
-        from models import User
         self.client.post('/register', data={
             'name': 'New Tutor',
             'email': 'new_tutor@inkbit.com',
@@ -267,6 +270,82 @@ class TestMockupDashboards(unittest.TestCase):
         self.client.post(f'/admin/delete-user/{tutor_id}')
         
         print("First login password change verified successfully.")
+
+    def test_quiz_system_upgrades(self):
+        # Test Quiz System Upgrades (New Stats, Review, Explain routes)
+        print("\nTesting Quiz System Upgrades...")
+        from app import app, db
+        from models import Quiz, QuizResult, Question
+        
+        # 1. Login as tutor and view stats of a quiz
+        self.client.post('/login', data={
+            'email': 'teacher@inkbit.com',
+            'password': 'inkbit123'
+        })
+        with app.app_context():
+            quiz = Quiz.query.first()
+            self.assertIsNotNone(quiz)
+            quiz_id = quiz.id
+            
+        res = self.client.get(f'/quiz/stats/{quiz_id}')
+        self.assertEqual(res.status_code, 200)
+        self.client.get('/logout')
+        
+        # 2. Login as student, take a quiz, submit it, review it
+        self.client.post('/login', data={
+            'email': 'student@inkbit.com',
+            'password': 'inkbit123'
+        })
+        
+        with app.app_context():
+            student = User.query.filter_by(email='student@inkbit.com').first()
+            self.assertIsNotNone(student)
+            student_id = student.id
+            
+        # Create a mock result
+        with app.app_context():
+            # Delete any existing results for this student and quiz
+            QuizResult.query.filter_by(student_id=student_id, quiz_id=quiz_id).delete()
+            db.session.commit()
+            
+        # Post answer
+        answers = {}
+        with app.app_context():
+            questions = Question.query.filter_by(quiz_id=quiz_id).all()
+            for q in questions:
+                answers[str(q.id)] = q.correct_answer
+                
+        import json
+        res = self.client.post(f'/quiz/submit/{quiz_id}', data={
+            'answers': json.dumps(answers)
+        })
+        # Should redirect to review page
+        self.assertEqual(res.status_code, 302)
+        
+        with app.app_context():
+            result = QuizResult.query.filter_by(student_id=student_id, quiz_id=quiz_id).first()
+            self.assertIsNotNone(result)
+            result_id = result.id
+            
+        # Access review page
+        res = self.client.get(f'/quiz/review/{result_id}')
+        self.assertEqual(res.status_code, 200)
+        
+        # Test AI explain api endpoint
+        if questions:
+            res = self.client.post('/api/ai-explain-question', json={
+                'question_id': questions[0].id,
+                'selected_choice': 'A'
+            })
+            self.assertEqual(res.status_code, 200)
+            
+        # Clean up result
+        with app.app_context():
+            QuizResult.query.filter_by(id=result_id).delete()
+            db.session.commit()
+            
+        self.client.get('/logout')
+        print("Quiz system upgrades verified successfully.")
 
 if __name__ == '__main__':
     unittest.main()
